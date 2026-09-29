@@ -6,10 +6,11 @@
     <nav class="nav" id="nav"></nav>
     <span class="sp"></span>
     <form class="hsearch" onsubmit="event.preventDefault();S.f.dong=this.q.value;go('search')"><input name="q" placeholder="동 이름·직종·시설명 검색" aria-label="검색"><button type="submit" aria-label="검색"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button></form>
+    <span id="auth-slot"></span>
     <button class="hicon" onclick="toast('알림 0건')" aria-label="알림"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/></svg></button>
     <div class="mode" role="tablist" aria-label="이용자 전환">
       <button id="m-user" class="on" onclick="setMode('user')">일자리 찾기</button>
-      <button id="m-biz" onclick="setMode('biz')">기업 채용</button>
+      <button id="m-biz" onclick="setMode('biz')">기업회원</button>
     </div>
   </div>
 </header>
@@ -19,11 +20,11 @@
 <footer class="foot"><div class="wrap">
   <div class="fcols">
     <div><span class="logo" style="font-size:18px"><i></i>케어잡모아</span><p class="cap" style="margin-top:8px">요양·돌봄 일자리 전문 잡포탈 · 케어닥 서브 브랜드<br>대표전화 02-1234-5678 (평일 09~18시)</p></div>
-    <div><b>구직자</b><a href="#" onclick="go('search');return false">일자리 찾기</a><a href="#" onclick="go('start');return false">자격증이 없어요</a><a href="#" onclick="toast('내 지원 내역');return false">내 지원 내역</a><a href="#" onclick="toast('새 공고 문자 알림');return false">새 공고 문자 받기</a></div>
+    <div><b>구직자</b><a href="#" onclick="go('search');return false">일자리 찾기</a><a href="#" onclick="go('start');return false">자격증이 없어요</a><a href="#" onclick="requireUser(()=>go('me'));return false">내 지원 내역</a><a href="#" onclick="requireUser(()=>toast('탐색 화면에서 조건을 고른 뒤 신청하세요'));return false">새 공고 문자 받기</a></div>
     <div><b>시설·병원</b><a href="#" onclick="setMode('biz');return false">기업 홈</a><a href="#" onclick="setMode('biz');go('post');return false">공고 등록 (무료)</a><a href="#" onclick="setMode('biz');go('ads');return false">광고 상품</a><a href="#" onclick="toast('ad@carejobmoa.kr');return false">광고 문의</a></div>
     <div><b>케어닥</b><a href="#" onclick="toast('케어닥 앱');return false">케어닥 일자리 찾기 앱</a><a href="#" onclick="toast('케어닥 교육원');return false">요양보호사 교육원</a><a href="#" onclick="toast('케어닥 홈');return false">caredoc.kr</a></div>
   </div>
   <div class="fbottom"><span>(주)케어닥 · 서울특별시 · 사업자등록번호 000-00-00000 · 직업정보제공사업 신고번호 J0000000000000</span><span>이용약관 · 개인정보처리방침 · 프로토타입(샘플 데이터)</span></div>
 </div></footer>
-<script src="/j0.js"></script><script src="/j1.js"></script><script src="/j2.js"></script><script src="/a0.js"></script><script src="/a1.js"></script><script src="/a2.js"></script><script src="/a3.js"></script><script src="/a4.js"></script><script src="/a5.js"></script><script src="/a6.js"></script>
+<script src="/j0.js"></script><script src="/j1.js"></script><script src="/j2.js"></script><script src="/a0.js"></script><script src="/a1.js"></script><script src="/a2.js"></script><script src="/a3.js"></script><script src="/a4.js"></script><script src="/a5.js"></script><script src="/a6.js"></script><script src="/a7.js"></script>
 </body></html>

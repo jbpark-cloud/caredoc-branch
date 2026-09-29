@@ -80,5 +80,5 @@ function home(){
       <div class="card stack">${I.cert}<h3>자격증이 없어도 시작</h3><p class="muted">지금 가능한 일부터 요양보호사 자격 취득까지, 케어닥 교육과 이어드립니다.</p></div>
     </div>
   </div>
-  <nav class="tabbar"><button class="on" onclick="go('home')">${I.tab_home}홈</button><button onclick="go('search')">${I.tab_list}일자리</button><button onclick="toast('내 지원 내역')">${I.tab_send}내 지원</button><button onclick="go('start')">${I.tab_cert}자격증</button></nav>`;
+  <nav class="tabbar five"><button class="on" onclick="go('home')">${I.tab_home}홈</button><button onclick="go('search')">${I.tab_list}일자리</button><button onclick="requireUser(()=>go('me'))">${I.tab_send}내 지원</button><button onclick="go('start')">${I.tab_cert}자격증</button><button onclick="setMode('biz')">${I.tab_biz}기업회원</button></nav>`;
 }

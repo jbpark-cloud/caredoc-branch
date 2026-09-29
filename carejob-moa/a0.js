@@ -2,7 +2,7 @@ const JOB_TYPES=["요양보호사","간병인","사회복지사","간호사","�
 const SCHEDS=["오전만","주간","주3일","야간","입주","단기"];
 const GUS=["전체",...[...new Set(JOBS.map(j=>j.gu))].sort((a,b)=>a.localeCompare(b,"ko"))];
 const FACS=["방문요양","주야간보호","요양원","요양병원","재활병원","일반 병원","복지관","실버타운","간병인 협회"];
-let S={screen:"home",mode:"user",home:{gu:"강남구",limit:30,tab:"fac",pick:{},group:"fac"},tal:{gu:"전체",job:[],sched:[],lic:false,caredoc:false},f:{gu:"전체",dong:"",job:[],sched:[],fac:[],noLic:false,sort:"near"},job:null,appl:{}};
+let S={screen:"home",mode:"user",auth:{user:null,biz:null},home:{gu:"강남구",limit:30,tab:"fac",pick:{},group:"fac"},tal:{gu:"전체",job:[],sched:[],lic:false,caredoc:false},f:{gu:"전체",dong:"",job:[],sched:[],fac:[],noLic:false,sort:"near"},job:null,appl:{}};
 const $=id=>document.getElementById(id);
 function go(screen,arg){ if(screen==="detail"){S.job=JOBS.find(j=>j.id===arg);} S.screen=screen; render(); window.scrollTo({top:0}); }
 function homePick(tab,name){ const same=S.home.pick[tab]===name; S.home.pick=same?{}:{[tab]:name}; S.home.limit=30; render(); if(!same){ const el=$("list-anchor"); if(el){ el.scrollIntoView({behavior:"smooth",block:"start"}); el.classList.add("flash"); setTimeout(()=>el.classList.remove("flash"),1200);} } }
@@ -22,6 +22,8 @@ const I={
  tab_list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
  tab_send:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l16 8-16 8 3-8z"/></svg>',
  tab_cert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"/><path d="M8.5 13.5 7 22l5-3 5 3-1.5-8.5"/></svg>',
+ kakao:'<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 3C6.5 3 2 6.4 2 10.6c0 2.7 1.8 5 4.5 6.4l-1 3.8c-.1.3.3.6.6.4l4.4-2.9c.5.1 1 .1 1.5.1 5.5 0 10-3.4 10-7.8S17.5 3 12 3z"/></svg>',
+ tab_biz:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></svg>',
  check:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>',
 };
 function gradeEl(g){ if(!g) return `<span class="grade"><b class="gN">–</b>평가 대상 아님</span>`; return `<span class="grade"><b class="g${g}">${g}</b>공단 평가 ${g}등급</span>`; }

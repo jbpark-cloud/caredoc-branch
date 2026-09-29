@@ -36,7 +36,7 @@ function search(){
       <div class="listhead"><h2>${S.f.gu==="전체"?"서울":S.f.gu}${S.f.dong?" "+esc(S.f.dong):""} 일자리 <span class="muted" style="font-size:18px">${list.length}건</span></h2>
         <div class="row"><div class="seg"><button class="${S.f.view!=="card"?"on":""}" onclick="S.f.view='list';render()">목록</button><button class="${S.f.view==="card"?"on":""}" onclick="S.f.view='card';render()">카드</button></div>
         <label class="small muted">정렬 <select onchange="S.f.sort=this.value;render()"><option value="near"${S.f.sort==="near"?" selected":""}>가까운 순</option><option value="new"${S.f.sort==="new"?" selected":""}>최신 순</option><option value="grade"${S.f.sort==="grade"?" selected":""}>시설 등급 순</option></select></label></div></div>
-      ${list.length?(S.f.view==="card"?`<div class="grid g2">${list.slice(0,S.f.limit||40).map(jobCard).join("")}</div>`:`<div class="tbl listwrap"><table class="list"><thead><tr><th class="c-day">등록</th><th class="c-org">기관명</th><th class="c-job">직종</th><th class="c-area">지역 · 거리</th><th class="c-time">근무시간</th><th class="c-pay">급여</th><th class="c-act"></th></tr></thead><tbody>${list.slice(0,S.f.limit||40).map(listRow).join("")}</tbody></table></div>`)+`${list.length>(S.f.limit||40)?`<button class="btn out wide" style="margin-top:16px" onclick="S.f.limit=(S.f.limit||40)+40;render()">공고 더 보기 (${list.length-(S.f.limit||40)}건 남음)</button>`:""}`:`<div class="empty"><p style="font-size:20px;color:var(--title)">조건에 맞는 공고가 아직 없어요</p><p>조건을 하나 줄여 보시거나, 새 공고가 올라오면 문자로 알려드릴까요?</p><button class="btn pri pill" style="margin-top:16px" onclick="toast('새 공고 알림을 신청했습니다')">이 조건 새 공고 문자 받기</button></div>`}
+      ${list.length?(S.f.view==="card"?`<div class="grid g2">${list.slice(0,S.f.limit||40).map(jobCard).join("")}</div>`:`<div class="tbl listwrap"><table class="list"><thead><tr><th class="c-day">등록</th><th class="c-org">기관명</th><th class="c-job">직종</th><th class="c-area">지역 · 거리</th><th class="c-time">근무시간</th><th class="c-pay">급여</th><th class="c-act"></th></tr></thead><tbody>${list.slice(0,S.f.limit||40).map(listRow).join("")}</tbody></table></div>`)+`${list.length>(S.f.limit||40)?`<button class="btn out wide" style="margin-top:16px" onclick="S.f.limit=(S.f.limit||40)+40;render()">공고 더 보기 (${list.length-(S.f.limit||40)}건 남음)</button>`:""}`:`<div class="empty"><p style="font-size:20px;color:var(--title)">조건에 맞는 공고가 아직 없어요</p><p>조건을 하나 줄여 보시거나, 새 공고가 올라오면 문자로 알려드릴까요?</p><button class="btn pri pill" style="margin-top:16px" onclick="requireUser(()=>{S.alert=(S.f.gu==='전체'?'서울':S.f.gu)+' '+(S.f.sched.join('·')||'전체');toast('새 공고 알림을 신청했습니다')})">이 조건 새 공고 문자 받기</button></div>`}
     </section></div>`;
 }
 function detail(){
@@ -81,12 +81,15 @@ function detail(){
       <h3>지원하기</h3>
       <p class="muted small">회원가입 없이 이름·전화번호만으로 지원됩니다. 걸리는 시간 1분.</p>
       <button class="btn pri pill wide" style="height:56px;font-size:18px" onclick="openApply()">간편 지원하기</button>
-      <div class="two"><button class="btn out" onclick="toast('공고를 저장했습니다')">저장</button><button class="btn out" onclick="toast('전화 연결: 02-555-0${j.id}23')">${I.phone}전화로 문의</button></div>
+      <div class="two"><button class="btn out" onclick="requireUser(()=>toast('공고를 저장했습니다'))">저장</button><button class="btn out" onclick="toast('전화 연결: 02-555-0${j.id}23')">${I.phone}전화로 문의</button></div>
       <p class="tel">02-555-0${String(j.id).padStart(2,"0")}3</p>
       <p class="cap">담당 ${j.caredoc?"케어닥 채용팀":"원장 김OO"} · 평일 09~18시 통화 가능</p>
     </aside>
   </div>
   <div class="bar two"><button class="btn out" onclick="toast('전화 연결: 02-555-0${j.id}23')">${I.phone}전화</button><button class="btn pri pill" onclick="openApply()">간편 지원하기</button></div>`;
 }
-function openApply(){S.appl={step:1,name:"",phone:"",via:"kakao",code:"",lic:[],ok:false};renderModal();}
-function closeModal(){const m=$("modal");if(m)m.remove();}
+// 구직자: 전화번호=아이디, 비밀번호 없음. 기업: 이메일+비밀번호, 인증 상태(none|pending|verified)
+function isUser(){return !!S.auth.user} function isBiz(){return !!S.auth.biz}
+function requireUser(then){ if(isUser()){then();return;} openLogin("user",then); }
+function requireBiz(then){ if(isBiz()){then();return;} openBizJoin(then); }
+const BSTAT={none:"미인증",pending:"검수 중",verified:"인증 완료"};
