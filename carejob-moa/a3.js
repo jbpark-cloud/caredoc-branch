@@ -1,69 +1,42 @@
-function maskPhone(p){return String(p).replace(/\D/g,"").replace(/(\d{3})(\d{4})(\d{4})/,"$1-****-$3");}
-function authSlot(){
-  const el=$("auth-slot"); if(!el)return;
-  if(S.mode==="biz"){ el.innerHTML=isBiz()?`<button class="uchip" onclick="go('bizme')"><b>${esc(S.auth.biz.org)}</b><span class="tag ${S.auth.biz.status==="verified"?"gr":S.auth.biz.status==="pending"?"bl":"gy"}">${BSTAT[S.auth.biz.status]}</span></button>`:`<button class="btn out sm pill" onclick="openLogin('biz')">로그인</button><button class="btn sec sm pill" onclick="openBizJoin()">1분 가입</button>`; }
-  else { el.innerHTML=isUser()?`<button class="uchip" onclick="go('me')"><b>${esc(S.auth.user.name)}님</b><span class="cap">${maskPhone(S.auth.user.phone)}</span></button>`:`<button class="btn out sm pill" onclick="openLogin()">로그인</button>`; }
+function listRow(j){
+  return `<tr class="lr${j.urgent?" urg":""}" onclick="go('detail',${j.id})">
+    <td class="c-day"><span class="${j.days===0?"new":""}">${j.days===0?"오늘":j.days+"일 전"}</span><span class="cap">${j.head}명 · 채용시까지</span></td>
+    <td class="c-org"><b>${esc(j.org)}</b><span class="rt">${j.urgent?'<span class="tag rd">급구</span>':''}${j.caredoc?'<span class="tag bl">케어닥 직영</span>':''}${j.noLic?'<span class="tag gr">자격증 없어도</span>':''}<span class="cap">${j.fac}</span>${gradeEl(j.grade)}</span></td>
+    <td class="c-job">${j.job}<span class="cap">${esc(j.title)}</span></td>
+    <td class="c-area">${j.area}<span class="cap or">${j.dist}</span></td>
+    <td class="c-time">${j.hours[0]}<span class="cap">${j.hours[1]||""} · ${j.sched}</span></td>
+    <td class="c-pay"><b>${j.pay}</b><span class="cap">${j.ins?"4대보험":"보험 미가입"}${j.payOpen?"":" · 협의"}</span></td>
+    <td class="c-act"><button class="btn pri pill xs" onclick="event.stopPropagation();S.job=JOBS.find(x=>x.id===${j.id});openApply()">지원</button></td></tr>`;
 }
-function logout(){S.auth.user=null;S.auth.biz=null;toast("로그아웃했습니다");go(S.mode==="biz"?"biz":"home");}
-let L={};
-function openLogin(kind,then){ L={kind:kind||null,step:kind?1:0,phone:"",code:"",via:"sms",ok:false,then:then||null,email:"",pw:""}; renderLogin(); }
-function renderLogin(){
-  closeModal(); let body="";
-  if(L.step===0) body=`<h2>어떻게 오셨어요?</h2><p class="muted">한 번만 고르시면 됩니다.</p>
-    <div class="stack" style="margin-top:16px">
-      <button class="pick" onclick="L.kind='user';L.step=1;renderLogin()"><b>일자리를 찾고 있어요</b><span>전화번호만 있으면 됩니다. 비밀번호 없음.</span></button>
-      <button class="pick" onclick="L.kind='biz';L.step=1;renderLogin()"><b>시설·병원 담당자예요</b><span>이메일로 로그인 · 처음이면 1분 가입</span></button></div>`;
-  else if(L.kind==="user"){
-    if(L.step===1) body=`<h2>전화번호를 눌러주세요</h2><p class="muted">비밀번호는 없습니다. 문자로 오는 숫자 6자리만 넣으면 끝.</p>
-      <div class="field big" style="margin-top:16px"><label for="l-phone">휴대전화</label><input id="l-phone" inputmode="numeric" placeholder="010-0000-0000" value="${esc(L.phone)}" oninput="L.phone=this.value"></div>
-      <button class="btn pri pill wide" style="margin-top:16px;height:56px;font-size:18px" onclick="if(L.phone.replace(/\\D/g,'').length<10){toast('전화번호를 확인해 주세요');return}L.step=2;L.via='sms';renderLogin()">문자로 인증번호 받기</button>
-      <div class="or"><span>또는</span></div>
-      <button class="btn kakao wide" onclick="L.step=2;L.via='kakao';renderLogin()">${I.kakao}카카오로 3초 로그인</button>
-      <p class="cap" style="margin-top:14px;text-align:center">처음 오셨어도 이 절차가 곧 가입입니다. 케어닥 앱 회원은 같은 번호로 자동 연결돼요.</p>`;
-    if(L.step===2) body=`<h2>${L.via==="kakao"?"카카오톡을 확인해 주세요":"문자를 확인해 주세요"}</h2>
-      ${L.via==="kakao"?`<div class="card" style="margin-top:16px;background:var(--bg)"><p>카카오톡 알림에서 <b>[확인]</b>을 누르시면 자동으로 로그인됩니다.</p><p class="cap">프로토타입: 아래 버튼으로 대신합니다</p><button class="btn sec sm" style="margin-top:10px" onclick="L.ok=true;L.phone=L.phone||'01055550101';renderLogin()">카카오 확인 완료로 처리</button></div>`
-        :`<div class="field big" style="margin-top:16px"><label for="l-code">문자로 받은 숫자 6자리</label><input id="l-code" inputmode="numeric" maxlength="6" placeholder="000000" oninput="L.code=this.value;L.ok=this.value.length===6;$('l-next').disabled=!L.ok"><span class="help">${esc(L.phone)}로 보냈습니다. 안 오면 <a href="#" onclick="toast('다시 보냈습니다');return false" style="color:var(--info)">다시 받기</a> · <a href="#" onclick="L.via='kakao';renderLogin();return false" style="color:var(--info)">카카오로 대신하기</a></span></div>`}
-      <div class="two" style="margin-top:20px"><button class="btn out" onclick="L.step=1;renderLogin()">이전</button><button id="l-next" class="btn pri pill" ${L.ok?"":"disabled"} onclick="finishUserLogin()">로그인</button></div>`;
-  } else {
-    body=`<h2>기업회원 로그인</h2><p class="muted">처음이시면 아래 '1분 가입'으로.</p>
-      <div class="stack" style="margin-top:16px;gap:12px"><div class="field"><label for="l-email">이메일(아이디)</label><input id="l-email" type="email" placeholder="manager@facility.kr" value="${esc(L.email)}" oninput="L.email=this.value"></div>
-      <div class="field"><label for="l-pw">비밀번호</label><input id="l-pw" type="password" placeholder="8자 이상" oninput="L.pw=this.value"><span class="help"><a href="#" onclick="toast('비밀번호 재설정 링크를 이메일로 보냈습니다');return false" style="color:var(--info)">비밀번호를 잊으셨나요?</a></span></div></div>
-      <button class="btn sec pill wide" style="margin-top:16px" onclick="if(!L.email.includes('@')||L.pw.length<8){toast('이메일과 비밀번호(8자 이상)를 확인해 주세요');return}finishBizLogin(L.email)">로그인</button>
-      <div class="or"><span>또는</span></div>
-      <button class="btn kakao wide" onclick="finishBizLogin('kakao')">${I.kakao}카카오로 로그인</button>
-      <button class="btn out wide" style="margin-top:10px" onclick="openBizJoin(L.then)">기업회원 1분 가입</button>`;
-  }
-  const ov=document.createElement("div");ov.className="ov";ov.id="modal";ov.innerHTML=`<div class="md" role="dialog" aria-modal="true">${body}</div>`;
-  ov.addEventListener("click",e=>{if(e.target===ov)closeModal();});document.body.appendChild(ov);
-  const f=ov.querySelector("input");if(f)f.focus();
+function feedCard(j){
+  return `<article class="fcard${j.top?" top":""}" onclick="go('detail',${j.id})"><div class="pay">${j.pay}</div><div class="dist">${j.dist}</div><h3>${esc(j.title)}</h3><div class="org">${j.top?'<span class="tag or">상위노출</span>':''}${j.urgent?'<span class="tag rd">급구</span>':''}${j.caredoc?'<span class="tag bl">케어닥 직영</span>':''}${j.noLic?'<span class="tag gr">자격증 없어도</span>':''}<span>${esc(j.org)} · ${j.area}</span></div><div class="meta"><span>${I.clock}${j.hours.join(" · ")}</span>${gradeEl(j.grade)}<span class="small muted">${j.days===0?"오늘":j.days+"일 전"}</span></div><div class="btns"><button class="btn out" onclick="event.stopPropagation();toast('전화 연결: 02-555-0${String(j.id).padStart(2,'0')}3')">${I.phone}전화</button><button class="btn pri pill" onclick="event.stopPropagation();S.job=JOBS.find(x=>x.id===${j.id});openApply()">간편 지원하기</button></div></article>`;
 }
-function finishUserLogin(){
-  const known=L.phone.replace(/\D/g,"").endsWith("0101");
-  S.auth.user={name:known?"김영숙":"회원",phone:L.phone.replace(/\D/g,""),lic:known?["요양보호사 자격증"]:[],caredoc:known,open:false};
-  closeModal(); toast(known?"김영숙님, 다시 오셨네요":"가입과 로그인이 끝났습니다"); const t=L.then; render(); if(t)t();
+function distNum(d){const m=d.match(/\d+/);let n=+m[0];if(d.includes("버스"))n=n*4+5;if(d.includes("지하철"))n=n*5+8;return n;}
+function filtered(){
+  let r=JOBS.filter(j=>(S.f.gu==="전체"||j.gu===S.f.gu)&&(!S.f.dong||j.area.includes(S.f.dong)||j.job.includes(S.f.dong)||j.org.includes(S.f.dong)||j.title.includes(S.f.dong))&&(!S.f.job.length||S.f.job.includes(j.job))&&(!S.f.sched.length||S.f.sched.includes(j.sched))&&(!S.f.fac.length||S.f.fac.includes(j.fac))&&(!S.f.noLic||j.noLic));
+  const top=r.filter(j=>j.top),rest=r.filter(j=>!j.top);
+  const sortf={near:(a,b)=>distNum(a.dist)-distNum(b.dist),new:(a,b)=>a.days-b.days,grade:(a,b)=>(a.grade||"F").localeCompare(b.grade||"F")}[S.f.sort];
+  return [...top.sort(sortf),...rest.sort(sortf)];
 }
-function finishBizLogin(email){ S.auth.biz={org:"해피케어 방문요양센터",fac:"방문요양",email,status:"verified",name:"김담당",phone:"02-555-0123"}; closeModal(); toast(email==="kakao"?"카카오로 로그인했습니다":"로그인했습니다"); const t=L.then; setMode("biz"); if(t)t(); }
-let B={};
-function openBizJoin(then){ B={step:1,org:"",fac:"방문요양",name:"",phone:"",email:"",pw:"",then:then||null,verify:"biz",bizno:"",ltc:""}; renderBizJoin(); }
-function renderBizJoin(){
-  closeModal(); const st=`<div class="steps">${[1,2].map(n=>`<i class="${B.step>=n?"on":""}"></i>`).join("")}</div>`; let body="";
-  if(B.step===1) body=`<span class="tag sec">기업회원 가입 · 1분</span><h2 style="margin-top:8px">시설 정보와 담당자</h2><p class="muted">공고 등록은 가입 즉시 가능합니다. 인증은 다음 단계에서.</p>${st}
-    <div class="form" style="gap:12px"><div class="field full"><label>시설·병원 이름</label><input placeholder="예: 해피케어 방문요양센터" value="${esc(B.org)}" oninput="B.org=this.value"></div>
-    <div class="field"><label>시설 유형</label><select onchange="B.fac=this.value">${FACS.map(f=>`<option${B.fac===f?" selected":""}>${f}</option>`).join("")}</select></div>
-    <div class="field"><label>담당자 이름</label><input placeholder="홍길동" value="${esc(B.name)}" oninput="B.name=this.value"></div>
-    <div class="field"><label>담당자 휴대전화</label><input inputmode="numeric" placeholder="010-0000-0000" value="${esc(B.phone)}" oninput="B.phone=this.value"></div>
-    <div class="field"><label>이메일 (아이디)</label><input type="email" placeholder="manager@facility.kr" value="${esc(B.email)}" oninput="B.email=this.value"></div>
-    <div class="field full"><label>비밀번호</label><input type="password" placeholder="8자 이상" oninput="B.pw=this.value"></div></div>
-    <button class="btn sec pill wide" style="margin-top:16px" onclick="if(!B.org||!B.name||B.phone.replace(/\\D/g,'').length<10||!B.email.includes('@')||B.pw.length<8){toast('빈칸과 비밀번호(8자 이상)를 확인해 주세요');return}B.step=2;renderBizJoin()">가입하고 인증 단계로</button>
-    <div class="or"><span>또는</span></div><button class="btn kakao wide" onclick="B.org=B.org||'우리요양원';B.name=B.name||'김담당';B.email='kakao';B.step=2;renderBizJoin()">${I.kakao}카카오로 빠르게 가입</button>
-    <p class="cap" style="margin-top:12px">가입 즉시 공고 작성이 가능하고, 인증이 끝나면 구직자에게 노출됩니다. 이미 회원이면 <a href="#" onclick="openLogin('biz',B.then);return false" style="color:var(--info)">로그인</a></p>`;
-  if(B.step===2) body=`<span class="tag sec">가입 완료</span><h2 style="margin-top:8px">시설 인증</h2><p class="muted">둘 중 하나만 입력하세요. 운영팀이 24시간 안에 확인합니다. 지금 건너뛰어도 됩니다.</p>${st}
-    <div class="cert" style="margin-top:8px"><button class="${B.verify==="biz"?"on":""}" onclick="B.verify='biz';renderBizJoin()">사업자등록번호</button><button class="${B.verify==="ltc"?"on":""}" onclick="B.verify='ltc';renderBizJoin()">장기요양기관 코드</button></div>
-    ${B.verify==="biz"?`<div class="field big" style="margin-top:14px"><label>사업자등록번호</label><input inputmode="numeric" placeholder="000-00-00000" value="${esc(B.bizno)}" oninput="B.bizno=this.value"><span class="help">국세청 조회로 대표자·상호 일치 여부를 확인합니다</span></div>`
-      :`<div class="field big" style="margin-top:14px"><label>장기요양기관 코드 (기호)</label><input inputmode="numeric" placeholder="1-2345678900" value="${esc(B.ltc)}" oninput="B.ltc=this.value"><span class="help">건강보험공단 기관 정보와 평가등급이 자동으로 연결됩니다</span></div>`}
-    <div class="two" style="margin-top:20px"><button class="btn out" onclick="finishBizJoin('none')">나중에 할게요</button><button class="btn sec pill" onclick="if(!(B.verify==='biz'?B.bizno:B.ltc)){toast('번호를 입력해 주세요');return}finishBizJoin('pending')">인증 요청</button></div>`;
-  const ov=document.createElement("div");ov.className="ov";ov.id="modal";ov.innerHTML=`<div class="md" role="dialog" aria-modal="true" style="max-width:600px">${body}</div>`;
-  ov.addEventListener("click",e=>{if(e.target===ov)closeModal();});document.body.appendChild(ov);
-  const f=ov.querySelector("input");if(f)f.focus();
+function tf(key,v){const a=S.f[key];const i=a.indexOf(v);i<0?a.push(v):a.splice(i,1);render();}
+function search(){
+  const list=filtered();
+  const chip=(key,v)=>`<button class="chip${S.f[key].includes(v)?" on":""}" onclick="tf('${key}','${v}')">${v}</button>`;
+  return `<div class="search">
+    <aside class="filter">
+      <div><h3>지역</h3><div class="field"><select id="f-gu" onchange="S.f.gu=this.value;render()">${GUS.map(g=>`<option${S.f.gu===g?" selected":""}>${g}</option>`).join("")}</select></div>
+        <div class="field" style="margin-top:8px"><input id="f-dong" placeholder="동 이름·직종·시설명" value="${esc(S.f.dong)}" onchange="S.f.dong=this.value;render()"></div></div>
+      <div><h3>근무 시간</h3><div class="chips">${SCHEDS.map(s=>chip("sched",s)).join("")}</div></div>
+      <div><h3>직종</h3><div class="chips">${JOB_TYPES.map(s=>chip("job",s)).join("")}</div></div>
+      <div><h3>시설 종류</h3><div class="chips">${FACS.map(s=>chip("fac",s)).join("")}</div></div>
+      <div class="toggle${S.f.noLic?" on":""}" onclick="S.f.noLic=!S.f.noLic;render()" role="switch" aria-checked="${S.f.noLic}" tabindex="0"><span>자격증 없어도 가능한 일만</span><span class="sw"></span></div>
+      <button class="btn out sm" onclick="S.f={gu:'전체',dong:'',job:[],sched:[],fac:[],noLic:false,sort:'near'};render()">조건 모두 지우기</button>
+    </aside>
+    <section>
+      <nav class="crumb" aria-label="경로"><a href="#" onclick="go('home');return false">홈</a><span>›</span><b>일자리</b>${S.f.gu!=="전체"?`<span>›</span><b>${S.f.gu}</b>`:""}${S.f.job.length===1?`<span>›</span><b>${S.f.job[0]}</b>`:""}</nav>
+      <div class="listhead"><h2>${S.f.gu==="전체"?"서울":S.f.gu}${S.f.dong?" "+esc(S.f.dong):""} ${S.f.job.length===1?S.f.job[0]+" ":""}일자리 <span class="muted" style="font-size:18px">${list.length}건</span></h2>
+        <div class="row"><div class="seg"><button class="${S.f.view!=="card"?"on":""}" onclick="S.f.view='list';render()">목록</button><button class="${S.f.view==="card"?"on":""}" onclick="S.f.view='card';render()">카드</button></div>
+        <label class="small muted">정렬 <select onchange="S.f.sort=this.value;render()"><option value="near"${S.f.sort==="near"?" selected":""}>가까운 순</option><option value="new"${S.f.sort==="new"?" selected":""}>최신 순</option><option value="grade"${S.f.sort==="grade"?" selected":""}>시설 등급 순</option></select></label></div></div>
+      ${list.length?(S.f.view==="card"?`<div class="grid g2">${list.slice(0,S.f.limit||40).map(jobCard).join("")}</div>`:`<div class="tbl listwrap"><table class="list"><thead><tr><th class="c-day">등록</th><th class="c-org">기관명</th><th class="c-job">직종</th><th class="c-area">지역 · 거리</th><th class="c-time">근무시간</th><th class="c-pay">급여</th><th class="c-act"></th></tr></thead><tbody>${list.slice(0,S.f.limit||40).map(listRow).join("")}</tbody></table></div>`)+`${list.length>(S.f.limit||40)?`<button class="btn out wide" style="margin-top:16px" onclick="S.f.limit=(S.f.limit||40)+40;render()">공고 더 보기 (${list.length-(S.f.limit||40)}건 남음)</button>`:""}`:`<div class="empty"><p style="font-size:20px;color:var(--title)">조건에 맞는 공고가 아직 없어요</p><p>조건을 하나 줄여 보시거나, 새 공고가 올라오면 문자로 알려드릴까요?</p><button class="btn pri pill" style="margin-top:16px" onclick="requireUser(()=>{S.alert=(S.f.gu==='전체'?'서울':S.f.gu)+' '+(S.f.sched.join('·')||'전체');toast('새 공고 알림을 신청했습니다')})">이 조건 새 공고 문자 받기</button></div>`}
+    </section></div>`;
 }
-function finishBizJoin(status){ S.auth.biz={org:B.org,fac:B.fac,email:B.email||"kakao",status,name:B.name,phone:B.phone,bizno:B.bizno,ltc:B.ltc}; closeModal(); const t=B.then; toast(status==="pending"?"가입 완료 · 인증 검수 중":"가입 완료 · 인증은 기업 홈에서 언제든"); setMode("biz"); if(t)t(); }

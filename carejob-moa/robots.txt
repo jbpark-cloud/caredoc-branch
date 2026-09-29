@@ -1,0 +1,3 @@
+User-agent: *
+Disallow: /
+# 프로토타입: 색인 차단. 실서비스: Allow / + Sitemap: https://carejobmoa.kr/sitemap.xml

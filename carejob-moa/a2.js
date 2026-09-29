@@ -1,95 +1,86 @@
-function listRow(j){
-  return `<tr class="lr${j.urgent?" urg":""}" onclick="go('detail',${j.id})">
-    <td class="c-day"><span class="${j.days===0?"new":""}">${j.days===0?"오늘":j.days+"일 전"}</span><span class="cap">${j.head}명 · 채용시까지</span></td>
-    <td class="c-org"><b>${esc(j.org)}</b><span class="rt">${j.urgent?'<span class="tag rd">급구</span>':''}${j.caredoc?'<span class="tag bl">케어닥 직영</span>':''}${j.noLic?'<span class="tag gr">자격증 없어도</span>':''}<span class="cap">${j.fac}</span>${gradeEl(j.grade)}</span></td>
-    <td class="c-job">${j.job}<span class="cap">${esc(j.title)}</span></td>
-    <td class="c-area">${j.area}<span class="cap or">${j.dist}</span></td>
-    <td class="c-time">${j.hours[0]}<span class="cap">${j.hours[1]||""} · ${j.sched}</span></td>
-    <td class="c-pay"><b>${j.pay}</b><span class="cap">${j.ins?"4대보험":"보험 미가입"}${j.payOpen?"":" · 협의"}</span></td>
-    <td class="c-act"><button class="btn pri pill xs" onclick="event.stopPropagation();S.job=JOBS.find(x=>x.id===${j.id});openApply()">지원</button></td></tr>`;
-}
-function feedCard(j){
-  return `<article class="fcard${j.top?" top":""}" onclick="go('detail',${j.id})"><div class="pay">${j.pay}</div><div class="dist">${j.dist}</div><h3>${esc(j.title)}</h3><div class="org">${j.top?'<span class="tag or">상위노출</span>':''}${j.urgent?'<span class="tag rd">급구</span>':''}${j.caredoc?'<span class="tag bl">케어닥 직영</span>':''}${j.noLic?'<span class="tag gr">자격증 없어도</span>':''}<span>${esc(j.org)} · ${j.area}</span></div><div class="meta"><span>${I.clock}${j.hours.join(" · ")}</span>${gradeEl(j.grade)}<span class="small muted">${j.days===0?"오늘":j.days+"일 전"}</span></div><div class="btns"><button class="btn out" onclick="event.stopPropagation();toast('전화 연결: 02-555-0${String(j.id).padStart(2,'0')}3')">${I.phone}전화</button><button class="btn pri pill" onclick="event.stopPropagation();S.job=JOBS.find(x=>x.id===${j.id});openApply()">간편 지원하기</button></div></article>`;
-}
-function distNum(d){const m=d.match(/\d+/);let n=+m[0];if(d.includes("버스"))n=n*4+5;if(d.includes("지하철"))n=n*5+8;return n;}
-function filtered(){
-  let r=JOBS.filter(j=>(S.f.gu==="전체"||j.gu===S.f.gu)&&(!S.f.dong||j.area.includes(S.f.dong)||j.job.includes(S.f.dong)||j.org.includes(S.f.dong)||j.title.includes(S.f.dong))&&(!S.f.job.length||S.f.job.includes(j.job))&&(!S.f.sched.length||S.f.sched.includes(j.sched))&&(!S.f.fac.length||S.f.fac.includes(j.fac))&&(!S.f.noLic||j.noLic));
-  const top=r.filter(j=>j.top),rest=r.filter(j=>!j.top);
-  const sortf={near:(a,b)=>distNum(a.dist)-distNum(b.dist),new:(a,b)=>a.days-b.days,grade:(a,b)=>(a.grade||"F").localeCompare(b.grade||"F")}[S.f.sort];
-  return [...top.sort(sortf),...rest.sort(sortf)];
-}
-function tf(key,v){const a=S.f[key];const i=a.indexOf(v);i<0?a.push(v):a.splice(i,1);render();}
-function search(){
-  const list=filtered();
-  const chip=(key,v)=>`<button class="chip${S.f[key].includes(v)?" on":""}" onclick="tf('${key}','${v}')">${v}</button>`;
-  return `<div class="search">
-    <aside class="filter">
-      <div><h3>지역</h3><div class="field"><select id="f-gu" onchange="S.f.gu=this.value;render()">${GUS.map(g=>`<option${S.f.gu===g?" selected":""}>${g}</option>`).join("")}</select></div>
-        <div class="field" style="margin-top:8px"><input id="f-dong" placeholder="동 이름·직종·시설명" value="${esc(S.f.dong)}" onchange="S.f.dong=this.value;render()"></div></div>
-      <div><h3>근무 시간</h3><div class="chips">${SCHEDS.map(s=>chip("sched",s)).join("")}</div></div>
-      <div><h3>직종</h3><div class="chips">${JOB_TYPES.map(s=>chip("job",s)).join("")}</div></div>
-      <div><h3>시설 종류</h3><div class="chips">${FACS.map(s=>chip("fac",s)).join("")}</div></div>
-      <div class="toggle${S.f.noLic?" on":""}" onclick="S.f.noLic=!S.f.noLic;render()" role="switch" aria-checked="${S.f.noLic}" tabindex="0"><span>자격증 없어도 가능한 일만</span><span class="sw"></span></div>
-      <button class="btn out sm" onclick="S.f={gu:'전체',dong:'',job:[],sched:[],fac:[],noLic:false,sort:'near'};render()">조건 모두 지우기</button>
-    </aside>
-    <section>
-      <div class="listhead"><h2>${S.f.gu==="전체"?"서울":S.f.gu}${S.f.dong?" "+esc(S.f.dong):""} 일자리 <span class="muted" style="font-size:18px">${list.length}건</span></h2>
-        <div class="row"><div class="seg"><button class="${S.f.view!=="card"?"on":""}" onclick="S.f.view='list';render()">목록</button><button class="${S.f.view==="card"?"on":""}" onclick="S.f.view='card';render()">카드</button></div>
-        <label class="small muted">정렬 <select onchange="S.f.sort=this.value;render()"><option value="near"${S.f.sort==="near"?" selected":""}>가까운 순</option><option value="new"${S.f.sort==="new"?" selected":""}>최신 순</option><option value="grade"${S.f.sort==="grade"?" selected":""}>시설 등급 순</option></select></label></div></div>
-      ${list.length?(S.f.view==="card"?`<div class="grid g2">${list.slice(0,S.f.limit||40).map(jobCard).join("")}</div>`:`<div class="tbl listwrap"><table class="list"><thead><tr><th class="c-day">등록</th><th class="c-org">기관명</th><th class="c-job">직종</th><th class="c-area">지역 · 거리</th><th class="c-time">근무시간</th><th class="c-pay">급여</th><th class="c-act"></th></tr></thead><tbody>${list.slice(0,S.f.limit||40).map(listRow).join("")}</tbody></table></div>`)+`${list.length>(S.f.limit||40)?`<button class="btn out wide" style="margin-top:16px" onclick="S.f.limit=(S.f.limit||40)+40;render()">공고 더 보기 (${list.length-(S.f.limit||40)}건 남음)</button>`:""}`:`<div class="empty"><p style="font-size:20px;color:var(--title)">조건에 맞는 공고가 아직 없어요</p><p>조건을 하나 줄여 보시거나, 새 공고가 올라오면 문자로 알려드릴까요?</p><button class="btn pri pill" style="margin-top:16px" onclick="requireUser(()=>{S.alert=(S.f.gu==='전체'?'서울':S.f.gu)+' '+(S.f.sched.join('·')||'전체');toast('새 공고 알림을 신청했습니다')})">이 조건 새 공고 문자 받기</button></div>`}
-    </section></div>`;
-}
-function detail(){
-  const j=S.job;
-  const rv=j.rv;
-  return `<div class="detail pad-bar">
-    <section class="stack" style="gap:16px">
-      <button class="btn out xs" style="align-self:flex-start" onclick="go('search')">← 목록으로</button>
-      <div class="card stack" style="gap:12px">
-        <div class="row">${j.top?'<span class="tag or">상위노출</span>':''}${j.urgent?'<span class="tag rd">급구</span>':''}${j.caredoc?'<span class="tag bl">케어닥 직영</span>':''}${j.noLic?'<span class="tag gr">자격증 없어도 가능</span>':''}</div>
-        <h1>${esc(j.title)}</h1>
-        <p style="font-size:20px">${esc(j.org)} <span class="muted">· ${j.fac} · ${j.area}</span></p>
-        <div class="hr" style="margin:8px 0"></div>
-        <dl class="kv">
-          <dt>급여</dt><dd><b style="font-size:20px">${j.pay}</b> ${j.payOpen?'<span class="tag gr">급여 공개</span>':'<span class="tag gy">면접 시 협의</span>'}</dd>
-          <dt>근무 시간</dt><dd>${j.hours.join(" · ")} <span class="tag or">${j.sched}</span></dd>
-          <dt>거리</dt><dd>내 위치(${S.f.dong||"강남구 대치동"})에서 <b>${j.dist}</b></dd>
-          <dt>4대보험</dt><dd>${j.ins?"가입":"미가입 · 프리랜서 계약"}</dd>
-          <dt>자격</dt><dd>${j.req}</dd>
-          <dt>모집 인원</dt><dd>${j.head}명 · 마감 시까지</dd>
-        </dl>
-        <div class="hr" style="margin:8px 0"></div>
-        <div class="grid g2"><div><h3>하는 일</h3><ul style="margin:8px 0 0;padding-left:20px">${j.duty.map(d=>`<li>${d}</li>`).join("")}</ul></div><div><h3>복리후생</h3><div class="chips" style="margin-top:8px">${j.benef.map(b=>`<span class="tag gy" style="font-size:14px;padding:6px 12px">${b}</span>`).join("")}</div></div></div>
-      </div>
-      <div class="card">
-        <div class="row" style="justify-content:space-between;margin-bottom:14px"><h2>이 시설, 믿을 수 있나요?</h2><span class="cap">케어잡모아가 확인한 정보</span></div>
-        <div class="trust">
-          <div><b>${j.grade||"–"}</b><span>건강보험공단 평가등급${j.grade?"":" (대상 아님)"}</span></div>
-          <div><b>${j.ins?"가입":"미가입"}</b><span>4대보험</span></div>
-          <div><b>${j.payOpen?"공개":"비공개"}</b><span>급여 공개 여부</span></div>
-          <div><b>${j.score}<small class="muted" style="font-size:14px"> /5</small></b><span>근무자 후기 ${j.reviews}건</span></div>
-        </div>
-        <div class="stack" style="margin-top:8px">${rv.map(r=>`<div class="review"><span class="star">${stars(r[2])}</span><p>${r[1]}</p><span class="who">${r[0]}</span></div>`).join("")}</div>
-      </div>
-      <div class="card stack">
-        <h2>오시는 길</h2>
-        <div class="map"><svg viewBox="0 0 600 180" aria-label="약도"><rect width="600" height="180" fill="var(--bg)"/><path d="M0 90h600M300 0v180M120 0v180M480 0v180M0 40h600M0 140h600" stroke="var(--line)" stroke-width="2" fill="none"/><circle cx="150" cy="120" r="10" fill="var(--secondary)"/><text x="150" y="152" text-anchor="middle" font-size="14" fill="var(--sub)" font-family="inherit">내 위치</text><path d="M160 116 Q300 60 440 66" stroke="var(--primary)" stroke-width="4" stroke-dasharray="8 6" fill="none"/><circle cx="450" cy="64" r="12" fill="var(--primary)"/><text x="450" y="45" text-anchor="middle" font-size="15" font-weight="700" fill="var(--title)" font-family="inherit">${esc(j.org)}</text><text x="300" y="112" text-anchor="middle" font-size="16" font-weight="700" fill="var(--primary)" font-family="inherit">${j.dist}</text></svg></div>
-        <p class="muted">${j.area} · 지도 앱으로 길찾기는 실제 서비스에서 연결됩니다.</p>
-      </div>
-    </section>
-    <aside class="side card stack" style="gap:12px">
-      <h3>지원하기</h3>
-      <p class="muted small">회원가입 없이 이름·전화번호만으로 지원됩니다. 걸리는 시간 1분.</p>
-      <button class="btn pri pill wide" style="height:56px;font-size:18px" onclick="openApply()">간편 지원하기</button>
-      <div class="two"><button class="btn out" onclick="requireUser(()=>toast('공고를 저장했습니다'))">저장</button><button class="btn out" onclick="toast('전화 연결: 02-555-0${j.id}23')">${I.phone}전화로 문의</button></div>
-      <p class="tel">02-555-0${String(j.id).padStart(2,"0")}3</p>
-      <p class="cap">담당 ${j.caredoc?"케어닥 채용팀":"원장 김OO"} · 평일 09~18시 통화 가능</p>
-    </aside>
+function home(){
+  const gu=S.home.gu;
+  const cnt=t=>JOBS.filter(j=>j.job===t).length, urg=t=>JOBS.filter(j=>j.job===t&&j.urgent).length;
+  const FAC_ALL=["방문요양","주야간보호","요양원","요양병원","재활병원","일반 병원","복지관","실버타운","간병인 협회"];
+  const hp=S.home.pick; // {fac|gu|job|sched: value}
+  const hf={gu:hp.gu||null,fac:hp.fac?[hp.fac]:[],job:hp.job?[hp.job]:[],sched:hp.sched?[hp.sched]:[]};
+  const pool=JOBS.filter(j=>(!hf.gu||j.gu===hf.gu)&&(!hf.fac.length||hf.fac.includes(j.fac))&&(!hf.job.length||hf.job.includes(j.job))&&(!hf.sched.length||hf.sched.includes(j.sched)));
+  const plat=pool.filter(j=>j.top).sort((a,b)=>a.days-b.days);
+  const rest=pool.filter(j=>!j.top).sort((a,b)=>a.days-b.days);
+  const near=JOBS.filter(j=>j.gu===gu).sort((a,b)=>distNum(a.dist)-distNum(b.dist));
+  const good=JOBS.filter(j=>j.grade==="A"&&j.ins&&j.payOpen).sort((a,b)=>b.score-a.score).slice(0,4);
+  const caredoc=JOBS.filter(j=>j.caredoc);
+  const pins=near.slice(0,8).map((j,i)=>{const ang=i/8*Math.PI*2-1.2;const r=(46+distNum(j.dist)*3.2);return {j,x:300+Math.cos(ang)*r*1.85,y:118+Math.sin(ang)*r*0.62}});
+  const tab=S.home.tab;
+  const panel={
+    fac:FAC_ALL.map(f=>[f,JOBS.filter(j=>j.fac===f).length,JOBS.filter(j=>j.fac===f&&j.urgent).length]),
+    gu:GUS.filter(g=>g!=="전체").map(g=>[g,JOBS.filter(j=>j.gu===g).length,JOBS.filter(j=>j.gu===g&&j.urgent).length]),
+    job:JOB_TYPES.map(t=>[t,cnt(t),urg(t)]),
+    sched:SCHEDS.map(s=>[s,JOBS.filter(j=>j.sched===s).length,JOBS.filter(j=>j.sched===s&&j.urgent).length]),
+  }[tab];
+  const pickLabel={fac:"기관별",gu:"지역별",job:"직종별",sched:"근무시간별"};
+  const sel=Object.entries(hp).filter(([k,v])=>v);
+  // 기관별 그룹 목록
+  const groupMode=S.home.group;
+  let listHtml="";
+  if(groupMode==="fac"){
+    const shown=rest.slice(0,S.home.limit); const groups={};
+    shown.forEach(j=>{(groups[j.fac]=groups[j.fac]||[]).push(j)});
+    listHtml=FAC_ALL.filter(f=>groups[f]).map(f=>`<tr class="grp"><td colspan="7"><b>${f}</b> <span class="muted small">${JOBS.filter(j=>j.fac===f).length}건 중 ${groups[f].length}건</span> <button class="lnk" onclick="homePick('fac','${f}')">이 기관만 보기</button></td></tr>`+groups[f].map(listRow).join("")).join("");
+  } else if(groupMode==="gu"){
+    const shown=rest.slice(0,S.home.limit); const groups={};
+    shown.forEach(j=>{(groups[j.gu]=groups[j.gu]||[]).push(j)});
+    listHtml=Object.keys(groups).sort((a,b)=>a.localeCompare(b,"ko")).map(g=>`<tr class="grp"><td colspan="7"><b>${g}</b> <span class="muted small">${JOBS.filter(j=>j.gu===g).length}건 중 ${groups[g].length}건</span> <button class="lnk" onclick="homePick('gu','${g}')">이 지역만 보기</button></td></tr>`+groups[g].map(listRow).join("")).join("");
+  } else listHtml=rest.slice(0,S.home.limit).map(listRow).join("");
+  return `
+  <section class="top-strip"><div class="wrap">
+    <div class="locbar">
+      <div class="loc">${I.pin.replace('class="ico sm gy"','class="ico"')}<select id="home-gu" onchange="S.home.gu=this.value;render()">${GUS.filter(g=>g!=="전체").map(g=>`<option${gu===g?" selected":""}>${g}</option>`).join("")}</select><span class="cap">${near.length}개 자리 · 가까운 순</span></div>
+      <div class="stats"><span><b>${JOBS.length}</b>전체 공고</span><span><b>${JOBS.filter(j=>j.days===0).length}</b>오늘 새 공고</span><span><b>${JOBS.filter(j=>j.urgent).length}</b>급구</span><span><b>${JOBS.filter(j=>j.noLic).length}</b>자격증 없어도</span></div>
+    </div>
+    <div class="banner-row">
+      <div class="banner main" onclick="go('start')"><span class="tag" style="background:rgba(255,255,255,.2);color:#fff">자격증이 없어요</span><h2>오늘 시작할 수 있는 일부터,<br>요양보호사가 되는 길까지</h2><p>지금 가능한 ${JOBS.filter(j=>j.noLic).length}개 자리 · 교육 연결 · 상담 무료</p><b>진입 경로 보기 →</b></div>
+      <div class="banner ad" onclick="go('detail',${caredoc[0].id})"><span class="tag or">광고 · 메인 배너</span><h3>${esc(caredoc[0].org)}</h3><p>${esc(caredoc[0].title)}<br>${caredoc[0].pay} · ${caredoc[0].hours[0]}</p><span class="cap">케어닥 직영 · 공단 평가 ${caredoc[0].grade||"–"}등급</span></div>
+      <div class="banner biz" onclick="setMode('biz')"><span class="tag" style="background:rgba(255,255,255,.18);color:#fff">시설·병원 담당자</span><h3>공고 등록 0원</h3><p>우리 동네 구직자에게 바로 닿습니다</p><b>무료로 공고 올리기 →</b></div>
+    </div>
+  </div></section>
+  <div class="wrap">
+    <!-- 분류 패널: 기관별 · 지역별 · 직종별 · 근무시간별 -->
+    <div class="browse">
+      <div class="btabs">${Object.entries(pickLabel).map(([k,v])=>`<button class="${tab===k?"on":""}" onclick="S.home.tab='${k}';render()">${v}</button>`).join("")}<span class="sp"></span>${sel.length?`<span class="tag or" style="font-size:14px;padding:4px 6px 4px 12px">${pickLabel[sel[0][0]]} · ${sel[0][1]} <button class="x" onclick="S.home.pick={};render()">×</button></span>`:`<span class="cap">누르면 아래 목록이 바뀝니다</span>`}</div>
+      <div class="bgrid ${tab}">${panel.map(([name,n,u])=>`<button class="bitem${hp[tab]===name?" on":""}" onclick="homePick('${tab}','${name}')"><span>${name}</span><b>${n}</b>${u?`<em>급구 ${u}</em>`:""}</button>`).join("")}</div>
+    </div>
+    <!-- 플래티넘(상위노출) 채용정보 -->
+    <div class="sec-t"><div><h2>상위노출 채용정보 <span class="muted" style="font-size:16px">${plat.length}건</span></h2><p class="muted small">유료 상위노출 공고 · 주황 테두리</p></div><button onclick="setMode('biz');go('ads')">내 공고도 여기에 →</button></div>
+    ${plat.length?`<div class="feedgrid">${plat.slice(0,6).map(feedCard).join("")}</div>`:`<div class="card" style="text-align:center;color:var(--sub)">이 조건의 상위노출 공고는 아직 없어요. 아래 전체 목록을 봐 주세요.</div>`}
+    <!-- 전체 채용정보: 밀도 높은 목록 -->
+    <div class="sec-t" id="list-anchor" style="margin-bottom:10px;scroll-margin-top:80px"><div><h2>전체 채용정보 <span class="muted" style="font-size:16px">${rest.length}건</span></h2>
+      <div class="selrow">${sel.length?sel.map(([k,v])=>`<span class="tag or">${pickLabel[k]} · ${v} <button class="x" onclick="S.home.pick={};render()">×</button></span>`).join(""):'<span class="cap">분류를 고르지 않으면 서울 전체 최신 순</span>'}</div></div>
+      <div class="row"><span class="small muted">묶어 보기</span><div class="seg"><button class="${!groupMode?"on":""}" onclick="S.home.group='';render()">최신 순</button><button class="${groupMode==="fac"?"on":""}" onclick="S.home.group='fac';render()">기관별</button><button class="${groupMode==="gu"?"on":""}" onclick="S.home.group='gu';render()">지역별</button></div></div></div>
+    <div class="tbl listwrap"><table class="list">
+      <thead><tr><th class="c-day">등록</th><th class="c-org">기관명</th><th class="c-job">직종</th><th class="c-area">지역 · 거리</th><th class="c-time">근무시간</th><th class="c-pay">급여</th><th class="c-act"></th></tr></thead>
+      <tbody>${listHtml||`<tr><td colspan="7" class="empty">이 조건의 공고가 아직 없어요. 다른 분류를 골라 보세요.</td></tr>`}</tbody></table></div>
+    ${rest.length>S.home.limit?`<button class="btn out wide" style="margin-top:12px" onclick="S.home.limit+=30;render()">공고 더 보기 (${rest.length-S.home.limit}건 남음)</button>`:""}
+    <!-- 내 주변 지도 + 등급 좋은 시설 -->
+    <div class="sec-t"><div><h2>${gu} 내 주변</h2><p class="muted small">핀의 글자는 건강보험공단 평가등급 · 주황 핀은 상위노출</p></div><button onclick="S.f.gu='${gu}';go('search')">목록으로 →</button></div>
+    <div class="dsplit">
+      <div class="mapbox"><svg viewBox="0 0 600 236" aria-label="주변 지도 미리보기">
+        <rect width="600" height="236" fill="var(--bg)"/>
+        <g stroke="var(--line)" stroke-width="2" fill="none"><path d="M0 118h600M300 0v236M0 60h600M0 178h600M150 0v236M450 0v236"/></g>
+        <g stroke="var(--line)" stroke-width="7" fill="none" opacity=".7"><path d="M30 200 Q300 30 570 200"/><path d="M60 16 Q300 210 540 26"/></g>
+        <circle cx="300" cy="118" r="9" fill="var(--secondary)"/><circle cx="300" cy="118" r="18" fill="none" stroke="var(--secondary)" stroke-width="2" opacity=".5"/><text x="300" y="146" text-anchor="middle" font-size="12" fill="var(--sub)" font-family="inherit">내 위치</text>
+        ${pins.map(p=>`<g style="cursor:pointer" onclick="go('detail',${p.j.id})"><circle cx="${p.x.toFixed(0)}" cy="${p.y.toFixed(0)}" r="13" fill="${p.j.top?'var(--primary)':'var(--card)'}" stroke="var(--primary)" stroke-width="2"/><text x="${p.x.toFixed(0)}" y="${(p.y+4).toFixed(0)}" text-anchor="middle" font-size="11" font-weight="700" fill="${p.j.top?'#fff':'var(--primary)'}" font-family="inherit">${p.j.grade||"•"}</text><text x="${p.x.toFixed(0)}" y="${(p.y+27).toFixed(0)}" text-anchor="middle" font-size="11" fill="var(--title)" font-family="inherit">${esc(p.j.job)}</text></g>`).join("")}
+      </svg><div class="mapfoot"><span class="cap">실제 서비스에서는 카카오 지도 · 반경 조절</span><button class="btn out sm" onclick="toast('지도 전체 보기(2차)')">지도 크게 보기</button></div></div>
+      <div class="goodlist"><h3>등급 A · 4대보험 · 급여 공개 시설</h3>${good.map(j=>`<article class="mini-job" onclick="go('detail',${j.id})"><span class="grade"><b class="g${j.grade}">${j.grade}</b></span><div><b>${esc(j.org)}</b><span>${esc(j.job)} · ${j.pay} · ${j.dist}</span></div><span class="tag gr">후기 ${j.score}</span></article>`).join("")}</div>
+    </div>
+    <div class="sec-t"><div><h2>지역별 · 직종별 채용정보 바로가기</h2><p class="muted small">검색엔진 색인용 내부 링크 허브 (실서비스에서는 각 링크가 고정 URL 페이지)</p></div></div>
+    <div class="card linkhub">${["강남구","서초구","송파구","강동구","성동구","마포구","노원구","강서구"].map(g=>`<div><b>${g}</b>${["요양보호사","간병인","사회복지사","간호조무사","병원동행매니저"].map(t=>`<a href="/jobs/${g}/${t}" onclick="S.f={gu:'${g}',dong:'',job:['${t}'],sched:[],fac:[],noLic:false,sort:'near'};go('search');return false">${g} ${t} 구인</a>`).join("")}</div>`).join("")}</div>
+    <div class="sec-t"><h2>왜 케어잡모아인가요</h2></div>
+    <div class="grid g3 why">
+      <div class="card stack">${I.home}<h3>가까운 곳·맞는 시간부터</h3><p class="muted">도보·버스 정거장 기준 거리와 오전·주3일·야간·입주·단기 근무형태로 찾습니다.</p></div>
+      <div class="card stack">${I.shield.replace('class="ico sm"','class="ico"')}<h3>믿을 수 있는 시설인지 먼저</h3><p class="muted">공단 평가등급, 4대보험, 급여 공개 여부, 근무자 후기를 공고에 기본 표시합니다.</p></div>
+      <div class="card stack">${I.cert}<h3>자격증이 없어도 시작</h3><p class="muted">지금 가능한 일부터 요양보호사 자격 취득까지, 케어닥 교육과 이어드립니다.</p></div>
+    </div>
   </div>
-  <div class="bar two"><button class="btn out" onclick="toast('전화 연결: 02-555-0${j.id}23')">${I.phone}전화</button><button class="btn pri pill" onclick="openApply()">간편 지원하기</button></div>`;
+  <nav class="tabbar five"><button class="on" onclick="go('home')">${I.tab_home}홈</button><button onclick="go('search')">${I.tab_list}일자리</button><button onclick="requireUser(()=>go('me'))">${I.tab_send}내 지원</button><button onclick="go('start')">${I.tab_cert}자격증</button><button onclick="setMode('biz')">${I.tab_biz}기업회원</button></nav>`;
 }
-// 구직자: 전화번호=아이디, 비밀번호 없음. 기업: 이메일+비밀번호, 인증 상태(none|pending|verified)
-function isUser(){return !!S.auth.user} function isBiz(){return !!S.auth.biz}
-function requireUser(then){ if(isUser()){then();return;} openLogin("user",then); }
-function requireBiz(then){ if(isBiz()){then();return;} openBizJoin(then); }
-const BSTAT={none:"미인증",pending:"검수 중",verified:"인증 완료"};

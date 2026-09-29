@@ -1,50 +1,62 @@
-function ads(){
-  const items=[
-   ["상위노출","지역·직종 목록 최상단 고정 + 주황 테두리","30,000원","7일",["30일 90,000원","같은 조건 무료 공고보다 평균 3~4배 조회(가안)","케어닥 앱 노출은 포함되지 않음"],true],
-   ["메인 배너","케어잡모아 첫 화면 '오늘 눈여겨볼 공고' 배너","150,000원","7일",["시설 브랜딩 · 로고·사진 노출","지역(구) 단위 타깃 선택","월 4개 시설만 판매"],false],
-   ["급구 태그","빨간 '급구' 표시 + 최신순 상단","7,000원","3일",["상위노출과 함께 쓰면 할인","오늘 당장 필요할 때"],false],
-   ["동네 문자 알림","근무지 반경 3km 구직자에게 공고 문자 발송","건당 90원","1회",["최소 200건 18,000원","수신 동의 구직자에게만 발송","야간 발송 없음 (08~20시)"],false],
-   ["인재 제안","인재정보에서 고른 구직자에게 공고 제안 발송","건당 5,000원","1건",["10건 묶음 40,000원","구직자 수락 시 연락처 공개","미수락 건 환불"],false]];
-  return `<div style="padding-block:24px" class="stack"><button class="btn out xs" style="align-self:flex-start" onclick="go('biz')">← 기업 홈</button><h1>광고 상품</h1><p class="muted">공고 등록과 지원자 열람은 언제나 무료입니다. 가격은 가안이며 확정 전입니다.</p></div>
-  <div class="grid g4" style="grid-template-columns:repeat(5,1fr)">${items.map(x=>`<div class="card price${x[5]?" hot":""}">${x[5]?'<span class="tag or" style="align-self:flex-start">가장 많이 선택</span>':""}<h3>${x[0]}</h3><p class="muted small">${x[1]}</p><p class="p">${x[2]}<small> / ${x[3]}</small></p><ul>${x[4].map(l=>`<li>${l}</li>`).join("")}</ul><button class="btn ${x[5]?"pri":"out"} pill" onclick="order('${x[0]}','${x[2]}')">신청</button></div>`).join("")}</div>
-  <div class="sec-t"><h2>상시 채용 시설이라면 월정액</h2></div>
-  <div class="card" style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;border-color:var(--secondary)"><div><span class="tag sec">프리미엄 월정액</span><h3 style="margin-top:8px">공고 무제한 + 상위노출 2건 상시 + 문자 알림 500건 + 인재 제안 50건</h3><p class="muted">요양원·요양병원처럼 늘 사람을 뽑는 시설용. 월 190,000원(가안).</p></div><button class="btn sec pill" onclick="order('프리미엄 월정액','190,000원')">상담 신청</button></div>
-  <div class="sec-t"><h2>상품 비교</h2></div>
-  <div class="card tbl"><table><tr><th></th><th>무료 공고</th><th style="background:var(--primary-bg)">상위노출</th><th>메인 배너</th><th>급구</th><th>문자 알림</th><th>월정액</th></tr>
-   <tr><td>목록 노출</td><td>최신순</td><td style="background:var(--primary-bg)">최상단 고정</td><td>최신순</td><td>상단</td><td>–</td><td>최상단 고정 2건</td></tr>
-   <tr><td>첫 화면 노출</td><td>–</td><td style="background:var(--primary-bg)">눈여겨볼 공고</td><td>배너</td><td>–</td><td>–</td><td>눈여겨볼 공고</td></tr>
-   <tr><td>강조 표시</td><td>–</td><td style="background:var(--primary-bg)">주황 테두리</td><td>로고·사진</td><td>빨간 태그</td><td>–</td><td>주황 테두리</td></tr>
-   <tr><td>구직자 직접 도달</td><td>–</td><td style="background:var(--primary-bg)">–</td><td>–</td><td>–</td><td>문자</td><td>문자 500건 · 제안 50건</td></tr>
-   <tr><td class="num">가격(가안)</td><td class="num">0원</td><td class="num" style="background:var(--primary-bg)">3만원/7일</td><td class="num">15만원/7일</td><td class="num">7천원/3일</td><td class="num">90원/건</td><td class="num">19만원/월</td></tr>
-  </table></div>`;
-}
-let ORD=[0];
-function order(name,price){
-  if(!isBiz()){ openBizJoin(()=>order(name,price)); return; }
-  closeModal(); const ov=document.createElement("div");ov.className="ov";ov.id="modal";
-  ov.innerHTML=`<div class="md" role="dialog"><h2>${name} 신청</h2><p class="muted">적용할 공고를 고르고 결제하세요. (프로토타입: 실제 결제 없음)</p>
-   <div class="stack" style="margin-top:16px">${["요양보호사 · 오전 9~12시","요양보호사 · 야간"].map((x,i)=>`<div class="check${ORD.includes(i)?" on":""}" onclick="(()=>{const k=ORD.indexOf(${i});k<0?ORD.push(${i}):ORD.splice(k,1);order('${name}','${price}')})()"><span class="bx">${ORD.includes(i)?I.check:""}</span>${x}</div>`).join("")}</div>
-   <div class="card" style="margin-top:16px;background:var(--bg)"><div class="row" style="justify-content:space-between"><span>${name} × ${ORD.length}건</span><b>${price}${ORD.length>1?" × "+ORD.length:""}</b></div><div class="row" style="justify-content:space-between"><span class="muted small">부가세 별도 · 세금계산서 발행</span></div></div>
-   <div class="two" style="margin-top:20px"><button class="btn out" onclick="closeModal()">취소</button><button class="btn pri pill" ${ORD.length?"":"disabled"} onclick="closeModal();toast('${name} ${ORD.length}건 결제 완료(목업)')">결제하기</button></div></div>`;
+function renderModal(){
+  closeModal(); const a=S.appl; const j=S.job;
+  const st=`<div class="steps">${[1,2,3].map(n=>`<i class="${a.step>=n?"on":""}"></i>`).join("")}</div>`;
+  let body="";
+  if(a.step===1) body=`<h2>이름과 전화번호를 알려주세요</h2><p class="muted">시설에서 이 번호로 연락드립니다.</p>${st}
+    <div class="stack big" style="gap:14px"><div class="field"><label for="a-name">이름</label><input id="a-name" placeholder="홍길동" value="${esc(a.name)}" oninput="S.appl.name=this.value"></div>
+    <div class="field"><label for="a-phone">휴대전화</label><input id="a-phone" inputmode="numeric" placeholder="010-0000-0000" value="${esc(a.phone)}" oninput="S.appl.phone=this.value"></div>
+    <div class="check${a.proxy?" on":""}" onclick="S.appl.proxy=!S.appl.proxy;renderModal()"><span class="bx">${a.proxy?I.check:""}</span><span>가족 대신 지원해요<br><span class="cap">일하실 분의 이름·번호를 위에, 연락받을 내 번호를 아래에</span></span></div>
+    ${a.proxy?`<div class="field"><label for="a-cphone">연락받을 보호자 번호</label><input id="a-cphone" inputmode="numeric" placeholder="010-0000-0000" value="${esc(a.cphone)}" oninput="S.appl.cphone=this.value"></div>`:""}</div>
+    <p class="cap" style="margin-top:12px">${isUser()?"로그인된 번호로 지원합니다.":"처음이시면 이 절차가 곧 회원가입입니다. 비밀번호는 없어요."}</p>
+    <button class="btn pri pill wide" style="margin-top:12px;height:56px;font-size:18px" onclick="if(!S.appl.name||S.appl.phone.replace(/\\D/g,'').length<10){toast('이름과 전화번호를 확인해 주세요');return}S.appl.step=isUser()?3:2;renderModal()">다음</button>`;
+  if(a.step===2) body=`<h2>본인 확인</h2><p class="muted">한 가지만 고르세요. 카카오톡이 더 편합니다.</p>${st}
+    <div class="cert"><button class="${a.via==="kakao"?"on":""}" onclick="S.appl.via='kakao';renderModal()">카카오톡 인증</button><button class="${a.via==="sms"?"on":""}" onclick="S.appl.via='sms';renderModal()">문자 인증</button></div>
+    ${a.via==="kakao"?`<div class="card" style="margin-top:16px;background:var(--bg)"><p><b>${esc(a.phone)}</b> 카카오톡으로 인증 요청을 보냈습니다.</p><p class="muted small">카카오톡 알림에서 [인증하기]를 누르시면 자동으로 확인됩니다. (프로토타입: 아래 버튼으로 대신)</p><button class="btn sec sm" style="margin-top:10px" onclick="S.appl.ok=true;renderModal()">인증 완료로 처리</button></div>`
+      :`<div class="field big" style="margin-top:16px"><label for="a-code">문자로 받은 숫자 6자리</label><input id="a-code" inputmode="numeric" placeholder="000000" maxlength="6" oninput="S.appl.code=this.value;S.appl.ok=this.value.length===6"><span class="help">${esc(a.phone)}로 보냈습니다. 안 오면 <a href="#" onclick="toast('다시 보냈습니다');return false" style="color:var(--info)">다시 받기</a></span></div>`}
+    <div class="two" style="margin-top:20px"><button class="btn out" onclick="S.appl.step=1;renderModal()">이전</button><button class="btn pri pill" ${a.ok?"":"disabled"} onclick="S.appl.step=3;renderModal()">확인됐어요, 다음</button></div>`;
+  if(a.step===3){ const opts=["요양보호사 자격증","간병인 교육 이수","사회복지사 자격증","간호조무사 자격증","운전면허(송영)","아직 없어요"];
+    body=`<h2>가지고 계신 자격을 눌러주세요</h2><p class="muted">여러 개 골라도 됩니다. 없으면 '아직 없어요'.</p>${st}
+    <div class="stack">${opts.map(o=>`<div class="check${a.lic.includes(o)?" on":""}" onclick="tl('${o}')"><span class="bx">${a.lic.includes(o)?I.check:""}</span>${o}</div>`).join("")}</div>
+    <div class="two" style="margin-top:20px"><button class="btn out" onclick="S.appl.step=2;renderModal()">이전</button><button class="btn pri pill" ${a.lic.length?"":"disabled"} onclick="S.appl.step=4;renderModal()">지원 완료</button></div>`; }
+  if(a.step===4) body=`<div class="done"><span class="ok"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span>
+    <h2>지원이 끝났습니다</h2><p class="muted" style="margin-top:8px"><b>${esc(j.org)}</b>에서 <b>${esc(a.proxy&&a.cphone?a.cphone:a.phone)}</b>로 보통 1~2일 안에 연락드립니다.</p>
+    ${(()=>{const isNew=!S.auth.user;if(isNew){S.auth.user={name:a.name,phone:a.phone.replace(/\D/g,""),lic:a.lic.filter(x=>x!=="아직 없어요"),caredoc:false,open:!!a.open};a.joined=true;authSlot();}S.applied=S.applied||[];if(!S.applied.includes(j.id))S.applied.push(j.id);return ""})()}
+    ${a.joined?`<div class="card" style="text-align:left;margin-top:16px;background:var(--green-bg);border-color:transparent"><b>회원가입도 함께 끝났습니다</b><p class="small">다음부터는 전화번호만 누르면 바로 지원돼요. 상단 이름을 누르면 내 지원 내역을 볼 수 있습니다.</p></div>`:""}
+    <div class="card" style="text-align:left;margin-top:20px;background:var(--bg)"><b>카카오톡으로 3가지만 더 여쭤볼게요</b><p class="muted small">경력 기간 · 가능한 요일 · 이동 수단. 답하시면 시설에서 더 빨리 연락합니다. (선택)</p></div>
+    <div class="check${a.open?" on":""}" style="margin-top:10px;text-align:left" onclick="S.appl.open=!S.appl.open;if(S.auth.user)S.auth.user.open=S.appl.open;renderModal()"><span class="bx">${a.open?I.check:""}</span><span>다른 시설에서도 연락받을게요<br><span class="cap">이름은 성만 남기고(김OO) 지역·자격·희망 시간만 시설에 보입니다. 연락처는 내가 수락해야 공개.</span></span></div>
+    <div class="two" style="margin-top:20px"><button class="btn out" onclick="closeModal()">닫기</button><button class="btn pri pill" onclick="closeModal();go('search')">비슷한 공고 더 보기</button></div></div>`;
+  const ov=document.createElement("div");ov.className="ov";ov.id="modal";ov.innerHTML=`<div class="md" role="dialog" aria-modal="true">${body}</div>`;
   ov.addEventListener("click",e=>{if(e.target===ov)closeModal();}); document.body.appendChild(ov);
+  const f=ov.querySelector("input");if(f&&a.step<4)f.focus();
 }
-let TALENTS=null;
-function seedRand(s){return function(){s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff}}
-function buildTalents(){
-  const r=seedRand(7); const pick=a=>a[Math.floor(r()*a.length)];
-  const sur=["김","이","박","최","정","강","조","윤","장","임","한","오","서","신","권"], gn=["숙","희","순","자","옥","영","미","경","정","선","혜","란"];
-  const LIC=[["요양보호사"],["요양보호사","사회복지사 2급"],["간병인 교육 이수"],["간호조무사"],["요양보호사","간호조무사"],["없음"],["없음"],["사회복지사 2급"],["요양보호사","1종 보통"],["조리사","보건증"],["1종 보통"],["물리치료사"],["간호사"]];
-  const WANT={"요양보호사":["요양보호사"],"요양보호사,사회복지사 2급":["사회복지사","요양보호사"],"간병인 교육 이수":["간병인"],"간호조무사":["간호조무사"],"요양보호사,간호조무사":["간호조무사","요양보호사"],"없음":["병원동행매니저","생활지원사","조리원·조리보조","사무행정"],"사회복지사 2급":["사회복지사"],"요양보호사,1종 보통":["요양보호사","운전원(송영)"],"조리사,보건증":["조리원·조리보조"],"1종 보통":["운전원(송영)"],"물리치료사":["물리치료사"],"간호사":["간호사"]};
-  const out=[];
-  for(let i=0;i<72;i++){
-    const lic=pick(LIC); const key=lic.join(","); const want=WANT[key]||["요양보호사"]; const job=pick(want);
-    const gu=r()<0.6?pick(["강남구","송파구","강동구","서초구"]):pick(GUS.filter(g=>g!=="전체")); const dong=pick(JOBS.filter(j=>j.gu===gu).map(j=>j.area.split(" ")[1])||["역삼동"]);
-    const age=50+Math.floor(r()*17); const sex=r()<0.9?"여":"남"; const yrs=lic[0]==="없음"?0:Math.floor(r()*12);
-    const sched=pick(SCHEDS); const days=pick(["월~금","월·수·금","화·목","주말 가능","요일 무관"]);
-    const pay=job==="간병인"?`일 ${12+Math.floor(r()*4)}만원`:(sched==="오전만"||sched==="주3일")?`시급 ${(13+Math.floor(r()*3))*1000+500}원`:`월 ${220+Math.floor(r()*8)*10}만원`;
-    const last=pick([0,0,1,1,2,3,5,7,10,14]); const caredoc=r()<0.25; const care=caredoc?`케어닥 근무 ${1+Math.floor(r()*4)}년 · 평점 ${(4+r()).toFixed(1)}`:"";
-    const move=pick(["도보","자차","대중교통","자전거"]); const memo=pick(["와상 어르신 케어 경험 있음","치매 어르신 대응 익숙","야간 근무 가능","즉시 출근 가능","주 3일만 희망","입주 가능","조리 경력 5년","송영 운전 경력"]);
-    out.push({id:i+1,name:pick(sur)+"OO",age,sex,gu,dong,lic,job,yrs,sched,days,pay,last,caredoc,care,move,memo,noLic:lic[0]==="없음"});
-  }
-  return out;
+function tl(o){const l=S.appl.lic;const i=l.indexOf(o);if(o==="아직 없어요"){S.appl.lic=i<0?[o]:[];}else{if(i<0)l.push(o);else l.splice(i,1);S.appl.lic=l.filter(x=>x!=="아직 없어요");}renderModal();}
+function start(){
+  const now=JOBS.filter(j=>j.noLic);
+  return `<div style="padding-block:24px" class="stack">
+    <span class="tag gr" style="align-self:flex-start">자격증이 없어도 괜찮습니다</span>
+    <h1>오늘 시작할 수 있는 일부터,<br>요양보호사가 되는 길까지</h1>
+    <p class="muted" style="max-width:640px">자격증이 없어도 바로 할 수 있는 일이 있습니다. 일하면서 자격을 따면 급여와 선택지가 넓어집니다.</p>
+  </div>
+  <div class="sec-t"><h2>지금 바로 가능한 일 <span class="muted" style="font-size:18px">${now.length}건</span></h2><button onclick="S.f.noLic=true;go('search')">전체 보기 →</button></div>
+  <div class="grid g3">${now.slice(0,6).map(jobCard).join("")}</div>
+  <div class="sec-t"><h2>요양보호사 자격, 이렇게 4단계</h2><span class="small muted">교육 240시간 기준 · 세부 내용은 교육원 확인</span></div>
+  <div class="road">
+    <div class="now"><b>1</b><h3>지금 가능한 일로 시작</h3><p>병원동행·생활지원·조리보조·간병인 협회 등록. 현장을 먼저 경험합니다.</p></div>
+    <div><b>2</b><h3>교육원 등록 (240시간)</h3><p>이론·실기·현장실습. 야간·주말반이 있어 일과 병행 가능. 케어닥 제휴 교육원 할인.</p></div>
+    <div><b>3</b><h3>국가시험 응시</h3><p>연 3회 이상 시행. 합격률 90% 안팎(미확인). 시험 대비 문제집은 케어닥이 무료 제공.</p></div>
+    <div><b>4</b><h3>자격증으로 재지원</h3><p>요양보호사 공고 전체가 열립니다. 시급 13,800~15,000원, 월 235~290만원대(샘플 공고 기준).</p></div>
+  </div>
+  <div class="card" style="margin-top:24px;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center">
+    <div><h3>케어닥 교육원 상담 받기</h3><p class="muted">내 동네 교육원과 야간반 일정을 전화로 안내해 드립니다. 상담 무료.</p></div>
+    <button class="btn pri pill" onclick="toast('상담 신청이 접수되었습니다')">상담 신청</button>
+  </div>
+  <div class="sec-t"><h2>자격이 필요한 일과 필요 없는 일</h2></div>
+  <div class="card tbl"><table><tr><th>직종</th><th>필요 자격</th><th>준비 기간</th><th class="num">샘플 급여</th></tr>
+    <tr><td>병원동행매니저</td><td>없음 (케어닥 교육 8시간)</td><td>1주</td><td class="num">건당 3~3.5만원</td></tr>
+    <tr><td>생활지원사</td><td>없음</td><td>바로</td><td class="num">월 118만원</td></tr>
+    <tr><td>조리원·조리보조</td><td>없음 (보건증)</td><td>1주</td><td class="num">월 205만원</td></tr>
+    <tr><td>간병인</td><td>없음 (협회 교육 권장)</td><td>1~2주</td><td class="num">일 13~15만원</td></tr>
+    <tr><td style="background:var(--primary-bg)">요양보호사</td><td style="background:var(--primary-bg)">국가자격 (교육 240시간 + 시험)</td><td style="background:var(--primary-bg)">3~4개월</td><td class="num" style="background:var(--primary-bg)">월 235~290만원</td></tr>
+    <tr><td>사회복지사</td><td>2급 이상 (학점 이수)</td><td>1~2년</td><td class="num">월 268만원</td></tr>
+  </table></div>`;
 }

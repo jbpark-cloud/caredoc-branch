@@ -1,25 +1,64 @@
-function bizVerifyBanner(){
-  const b=S.auth.biz; if(!b) return `<div class="vbanner none"><div><b>아직 로그인 전입니다</b><p>가입은 1분, 공고 등록은 무료. 인증이 끝나면 구직자에게 노출됩니다.</p></div><div class="row"><button class="btn out sm" onclick="openLogin('biz')">로그인</button><button class="btn sec sm pill" onclick="openBizJoin()">기업회원 1분 가입</button></div></div>`;
-  if(b.status==="verified") return `<div class="vbanner ok"><div><b>${esc(b.org)} · 인증 완료</b><p>공고가 구직자에게 노출되고 있습니다. 공단 평가등급이 공고에 자동 표시됩니다.</p></div><span class="tag gr">인증 완료</span></div>`;
-  if(b.status==="pending") return `<div class="vbanner pend"><div><b>${esc(b.org)} · 인증 검수 중</b><p>운영팀이 24시간 안에 확인합니다. 그동안 공고를 미리 작성해 두세요. 검수가 끝나면 자동 노출됩니다.</p></div><button class="btn out sm" onclick="S.auth.biz.status='verified';toast('인증이 완료되었습니다 (프로토타입)');render()">검수 완료로 처리(목업)</button></div>`;
-  return `<div class="vbanner none"><div><b>${esc(b.org)} · 시설 인증이 필요합니다</b><p>공고는 작성할 수 있지만 인증 전엔 구직자에게 보이지 않습니다. 사업자번호 또는 장기요양기관 코드 하나면 됩니다. 7일 안에 인증하지 않으면 리마인드 후 작성한 공고가 비공개로 유지됩니다.</p></div><button class="btn sec sm pill" onclick="B={step:2,org:S.auth.biz.org,fac:S.auth.biz.fac,name:S.auth.biz.name,phone:S.auth.biz.phone||'',email:S.auth.biz.email,verify:'biz',bizno:'',ltc:'',then:null};renderBizJoin()">지금 인증하기</button></div>`;
+function detail(){
+  const j=S.job;
+  const rv=j.rv;
+  return `<div class="detail pad-bar">
+    <section class="stack" style="gap:16px">
+      <nav class="crumb" aria-label="경로"><a href="#" onclick="go('home');return false">홈</a><span>›</span><a href="#" onclick="S.f={gu:'전체',dong:'',job:[],sched:[],fac:[],noLic:false,sort:'near'};go('search');return false">일자리</a><span>›</span><a href="#" onclick="S.f={gu:'${j.gu}',dong:'',job:[],sched:[],fac:[],noLic:false,sort:'near'};go('search');return false">${j.gu}</a><span>›</span><a href="#" onclick="S.f={gu:'${j.gu}',dong:'',job:['${j.job}'],sched:[],fac:[],noLic:false,sort:'near'};go('search');return false">${j.job}</a><span>›</span><b>${esc(j.org)}</b></nav>
+      <div class="card stack" style="gap:12px">
+        <div class="row">${j.top?'<span class="tag or">상위노출</span>':''}${j.urgent?'<span class="tag rd">급구</span>':''}${j.caredoc?'<span class="tag bl">케어닥 직영</span>':''}${j.noLic?'<span class="tag gr">자격증 없어도 가능</span>':''}</div>
+        <h1>${esc(j.title)}</h1>
+        <p style="font-size:20px">${esc(j.org)} <span class="muted">· ${j.fac} · ${j.area}</span></p>
+        <div class="urlbar"><span class="cap">이 공고 주소</span><code>carejobmoa.kr${pathFor()}</code><button class="btn out xs" onclick="(async()=>{try{await navigator.clipboard.writeText('https://carejobmoa.kr'+pathFor());toast('주소를 복사했습니다')}catch(e){toast('복사가 지원되지 않는 환경입니다')}})()">복사</button></div>
+        <div class="hr" style="margin:8px 0"></div>
+        <dl class="kv">
+          <dt>급여</dt><dd><b style="font-size:20px">${j.pay}</b> ${j.payOpen?'<span class="tag gr">급여 공개</span>':'<span class="tag gy">면접 시 협의</span>'}</dd>
+          <dt>근무 시간</dt><dd>${j.hours.join(" · ")} <span class="tag or">${j.sched}</span></dd>
+          <dt>거리</dt><dd>내 위치(${S.f.dong||"강남구 대치동"})에서 <b>${j.dist}</b></dd>
+          <dt>4대보험</dt><dd>${j.ins?"가입":"미가입 · 프리랜서 계약"}</dd>
+          <dt>자격</dt><dd>${j.req}</dd>
+          <dt>모집 인원</dt><dd>${j.head}명 · 마감 시까지</dd>
+        </dl>
+        <div class="hr" style="margin:8px 0"></div>
+        <div class="grid g2"><div><h3>하는 일</h3><ul style="margin:8px 0 0;padding-left:20px">${j.duty.map(d=>`<li>${d}</li>`).join("")}</ul></div><div><h3>복리후생</h3><div class="chips" style="margin-top:8px">${j.benef.map(b=>`<span class="tag gy" style="font-size:14px;padding:6px 12px">${b}</span>`).join("")}</div></div></div>
+      </div>
+      <div class="card">
+        <div class="row" style="justify-content:space-between;margin-bottom:14px"><h2>이 시설, 믿을 수 있나요?</h2><span class="cap">케어잡모아가 확인한 정보</span></div>
+        <div class="trust">
+          <div><b>${j.grade||"–"}</b><span>건강보험공단 평가등급${j.grade?"":" (대상 아님)"}</span></div>
+          <div><b>${j.ins?"가입":"미가입"}</b><span>4대보험</span></div>
+          <div><b>${j.payOpen?"공개":"비공개"}</b><span>급여 공개 여부</span></div>
+          <div><b>${j.score}<small class="muted" style="font-size:14px"> /5</small></b><span>근무자 후기 ${j.reviews}건</span></div>
+        </div>
+        <div class="stack" style="margin-top:8px">${rv.map(r=>`<div class="review"><span class="star">${stars(r[2])}</span><p>${r[1]}</p><span class="who">${r[0]}</span></div>`).join("")}</div>
+      </div>
+      <div class="card stack">
+        <h2>오시는 길</h2>
+        <div class="map"><svg viewBox="0 0 600 180" aria-label="약도"><rect width="600" height="180" fill="var(--bg)"/><path d="M0 90h600M300 0v180M120 0v180M480 0v180M0 40h600M0 140h600" stroke="var(--line)" stroke-width="2" fill="none"/><circle cx="150" cy="120" r="10" fill="var(--secondary)"/><text x="150" y="152" text-anchor="middle" font-size="14" fill="var(--sub)" font-family="inherit">내 위치</text><path d="M160 116 Q300 60 440 66" stroke="var(--primary)" stroke-width="4" stroke-dasharray="8 6" fill="none"/><circle cx="450" cy="64" r="12" fill="var(--primary)"/><text x="450" y="45" text-anchor="middle" font-size="15" font-weight="700" fill="var(--title)" font-family="inherit">${esc(j.org)}</text><text x="300" y="112" text-anchor="middle" font-size="16" font-weight="700" fill="var(--primary)" font-family="inherit">${j.dist}</text></svg></div>
+        <p class="muted">${j.area} · 지도 앱으로 길찾기는 실제 서비스에서 연결됩니다.</p>
+      </div>
+    </section>
+    <aside class="side card stack" style="gap:12px">
+      <h3>지원하기</h3>
+      <p class="muted small">회원가입 없이 이름·전화번호만으로 지원됩니다. 걸리는 시간 1분.</p>
+      <button class="btn pri pill wide" style="height:56px;font-size:18px" onclick="openApply()">간편 지원하기</button>
+      <div class="two"><button class="btn out" onclick="requireUser(()=>toast('공고를 저장했습니다'))">저장</button><button class="btn out" onclick="toast('전화 연결: 02-555-0${j.id}23')">${I.phone}전화로 문의</button></div>
+      <p class="tel">02-555-0${String(j.id).padStart(2,"0")}3</p>
+      <p class="cap">담당 ${j.caredoc?"케어닥 채용팀":"원장 김OO"} · 평일 09~18시 통화 가능</p>
+    </aside>
+  </div>
+  <div class="bar two"><button class="btn out" onclick="toast('전화 연결: 02-555-0${j.id}23')">${I.phone}전화</button><button class="btn pri pill" onclick="openApply()">간편 지원하기</button></div>`;
 }
-function me(){
-  const u=S.auth.user; if(!u){setTimeout(()=>openLogin("user",()=>go('me')),0);return home();}
-  return `<div style="padding-block:24px" class="stack"><h1>내 정보</h1></div>
-  <div class="grid g2">
-    <div class="card stack"><h3>${esc(u.name)}님</h3><dl class="kv"><dt>전화번호</dt><dd>${String(u.phone).replace(/(\d{3})(\d{4})(\d{4})/,"$1-$2-$3")} <span class="tag gr">인증됨</span></dd><dt>자격</dt><dd>${u.lic.length?u.lic.join(" · "):`아직 없음 · <a href="#" onclick="go('start');return false" style="color:var(--info)">자격 취득 경로 보기</a>`}</dd><dt>케어닥 앱</dt><dd>${u.caredoc?'<span class="tag bl">연결됨</span> 케어닥 근무 이력이 인증 경력으로 표시됩니다':"연결 안 됨 · 같은 번호로 케어닥 앱에 가입하면 자동 연결"}</dd></dl>
-      <div class="hr"></div><div class="check${u.open?" on":""}" onclick="S.auth.user.open=!S.auth.user.open;render()"><span class="bx">${u.open?I.check:""}</span><span>다른 시설에서도 연락받을게요<br><span class="cap">이름은 성만 남기고(김OO) 지역·자격·희망 시간만 시설에 보입니다. 연락처는 내가 수락해야 공개.</span></span></div></div>
-    <div class="card stack"><h3>내 지원 내역</h3>${(S.applied||[]).length?"":'<p class="muted">아직 지원한 공고가 없어요.</p>'}${(S.applied||[]).map(id=>{const j=JOBS.find(x=>x.id===id);return `<article class="mini-job" onclick="go('detail',${j.id})"><span class="tag or">지원함</span><div><b>${esc(j.org)}</b><span>${esc(j.job)} · ${j.pay}</span></div><span class="cap">연락 대기</span></article>`}).join("")}
-      <div class="hr"></div><h3>새 공고 문자 알림</h3><p class="muted small">${S.alert?`${esc(S.alert)} 조건으로 새 공고가 오면 문자로 알려드립니다.`:"탐색 화면에서 조건을 고르고 '새 공고 문자 받기'를 누르세요."}</p>
-      <button class="btn out sm" style="align-self:flex-start;margin-top:8px" onclick="logout()">로그아웃</button></div>
-  </div>`;
+// 구직자: 전화번호=아이디, 비밀번호 없음. 기업: 이메일+비밀번호, 인증 상태(none|pending|verified)
+function isUser(){return !!S.auth.user} function isBiz(){return !!S.auth.biz}
+function requireUser(then){ if(isUser()){then();return;} openLogin("user",then); }
+function requireBiz(then){ if(isBiz()){then();return;} openBizJoin(then); }
+const BSTAT={none:"미인증",pending:"검수 중",verified:"인증 완료"};
+function maskPhone(p){return String(p).replace(/\D/g,"").replace(/(\d{3})(\d{4})(\d{4})/,"$1-****-$3");}
+function authSlot(){
+  const el=$("auth-slot"); if(!el)return;
+  if(S.mode==="biz"){ el.innerHTML=isBiz()?`<button class="uchip" onclick="go('bizme')"><b>${esc(S.auth.biz.org)}</b><span class="tag ${S.auth.biz.status==="verified"?"gr":S.auth.biz.status==="pending"?"bl":"gy"}">${BSTAT[S.auth.biz.status]}</span></button>`:`<button class="btn out sm pill" onclick="openLogin('biz')">로그인</button><button class="btn sec sm pill" onclick="openBizJoin()">1분 가입</button>`; }
+  else { el.innerHTML=isUser()?`<button class="uchip" onclick="go('me')"><b>${esc(S.auth.user.name)}님</b><span class="cap">${maskPhone(S.auth.user.phone)}</span></button>`:`<button class="btn out sm pill" onclick="openLogin()">로그인</button>`; }
 }
-function bizme(){
-  const b=S.auth.biz; if(!b){setTimeout(()=>openLogin("biz",()=>go('bizme')),0);return biz();}
-  return `<div style="padding-block:24px" class="stack"><h1>기업회원 정보</h1></div>${bizVerifyBanner()}
-  <div class="grid g2" style="margin-top:16px"><div class="card stack"><h3>${esc(b.org)}</h3><dl class="kv"><dt>시설 유형</dt><dd>${b.fac}</dd><dt>담당자</dt><dd>${esc(b.name)}</dd><dt>아이디</dt><dd>${b.email==="kakao"?"카카오 연동":esc(b.email)}</dd><dt>인증</dt><dd>${b.status==="verified"?"인증 완료 · 공단 평가 A등급 연결":BSTAT[b.status]}</dd></dl></div>
-  <div class="card stack"><h3>이용 중인 상품</h3><p class="muted small">상위노출 7일 (요양보호사 · 오전) · 잔여 4일</p><p class="muted small">인재 제안 잔여 0건</p><button class="btn out sm" style="align-self:flex-start" onclick="go('ads')">광고 상품 보기</button><div class="hr"></div><button class="btn out sm" style="align-self:flex-start" onclick="logout()">로그아웃</button></div></div>`;
-}
-function openApply(){ const u=S.auth.user; S.appl={step:1,name:u?u.name:"",phone:u?u.phone:"",via:"kakao",code:"",lic:u?u.lic.slice():[],ok:!!u,proxy:false,cphone:"",open:u?u.open:false}; if(u&&u.lic.length){S.appl.step=3;} renderModal(); }
-function closeModal(){const m=$("modal");if(m)m.remove();}
+function logout(){S.auth.user=null;S.auth.biz=null;toast("로그아웃했습니다");go(S.mode==="biz"?"biz":"home");}
+let L={};
+function openLogin(kind,then){ L={kind:kind||null,step:kind?1:0,phone:"",code:"",via:"sms",ok:false,then:then||null,email:"",pw:""}; renderLogin(); }
