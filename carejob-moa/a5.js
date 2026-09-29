@@ -1,9 +1,9 @@
 function order(name,price){
   closeModal(); const ov=document.createElement("div");ov.className="ov";ov.id="modal";
   ov.innerHTML=`<div class="md" role="dialog"><h2>${name} 신청</h2><p class="muted">적용할 공고를 고르고 결제하세요. (프로토타입: 실제 결제 없음)</p>
-   <div class="stack" style="margin-top:16px"><div class="check on"><span class="bx">${I.check}</span>요양보호사 · 오전 9~12시</div><div class="check"><span class="bx"></span>요양보호사 · 야간</div></div>
-   <div class="card" style="margin-top:16px;background:var(--bg)"><div class="row" style="justify-content:space-between"><span>${name}</span><b>${price}</b></div><div class="row" style="justify-content:space-between"><span class="muted small">부가세 별도 · 세금계산서 발행</span></div></div>
-   <div class="two" style="margin-top:20px"><button class="btn out" onclick="closeModal()">취소</button><button class="btn pri pill" onclick="closeModal();toast('${name} 결제 완료(목업)')">결제하기</button></div></div>`;
+   <div class="stack" style="margin-top:16px">${["요양보호사 · 오전 9~12시","요양보호사 · 야간"].map((x,i)=>`<div class="check${ORD.includes(i)?" on":""}" onclick="(()=>{const k=ORD.indexOf(${i});k<0?ORD.push(${i}):ORD.splice(k,1);order('${name}','${price}')})()"><span class="bx">${ORD.includes(i)?I.check:""}</span>${x}</div>`).join("")}</div>
+   <div class="card" style="margin-top:16px;background:var(--bg)"><div class="row" style="justify-content:space-between"><span>${name} × ${ORD.length}건</span><b>${price}${ORD.length>1?" × "+ORD.length:""}</b></div><div class="row" style="justify-content:space-between"><span class="muted small">부가세 별도 · 세금계산서 발행</span></div></div>
+   <div class="two" style="margin-top:20px"><button class="btn out" onclick="closeModal()">취소</button><button class="btn pri pill" ${ORD.length?"":"disabled"} onclick="closeModal();toast('${name} ${ORD.length}건 결제 완료(목업)')">결제하기</button></div></div>`;
   ov.addEventListener("click",e=>{if(e.target===ov)closeModal();}); document.body.appendChild(ov);
 }
 let TALENTS=null;
@@ -57,22 +57,16 @@ function talentRow(t){
     <td class="c-pay"><b>${t.pay}</b><span class="cap">희망</span></td>
     <td class="c-act"><button class="btn sec pill xs" onclick="event.stopPropagation();openTalent(${t.id})">제안</button></td></tr>`;
 }
+function t_sel(id){const t=TALENTS.find(x=>x.id===id); if(!t.sel)t.sel=[0]; return t.sel;}
 function openTalent(id){
-  const t=TALENTS.find(x=>x.id===id); closeModal();
+  const t=TALENTS.find(x=>x.id===id); if(!t.sel)t.sel=[0]; closeModal();
   const ov=document.createElement("div");ov.className="ov";ov.id="modal";
   ov.innerHTML=`<div class="md" role="dialog"><div class="row" style="margin-bottom:6px">${t.caredoc?'<span class="tag bl">케어닥 근무 인증</span>':''}${t.noLic?'<span class="tag gr">자격 취득 예정</span>':''}<span class="tag gy">${t.last===0?"오늘 활동":t.last+"일 전 활동"}</span></div>
    <h2>${t.name} <span class="muted" style="font-size:18px;font-weight:500">${t.age}세 ${t.sex} · ${t.gu} ${t.dong}</span></h2>
    <dl class="kv" style="margin-top:14px"><dt>희망 직종</dt><dd>${t.job}</dd><dt>자격</dt><dd>${t.lic.join(" · ")}</dd><dt>경력</dt><dd>${t.yrs?t.yrs+"년":"신입"}${t.care?` · <b style="color:var(--info)">${t.care}</b>`:""}</dd><dt>가능 시간</dt><dd>${t.sched} · ${t.days}</dd><dt>이동</dt><dd>${t.move}</dd><dt>희망 급여</dt><dd>${t.pay}</dd><dt>한마디</dt><dd>${esc(t.memo)}</dd><dt>연락처</dt><dd><span class="muted">010-****-**** · 수락 후 공개</span></dd></dl>
-   <div class="card" style="margin-top:16px;background:var(--bg)"><b>제안할 공고</b><div class="stack" style="margin-top:8px"><div class="check on"><span class="bx">${I.check}</span>요양보호사 · 오전 9~12시</div><div class="check"><span class="bx"></span>요양보호사 · 야간</div></div><p class="cap" style="margin-top:8px">구직자에게 카카오톡으로 공고와 시설 정보(평가등급·급여·거리)가 전달됩니다. 수락률 평균 38%(가안).</p></div>
-   <div class="row" style="justify-content:space-between;margin-top:16px"><span>제안 1건 <b>5,000원</b> <span class="cap">미수락 시 환불</span></span></div>
-   <div class="two" style="margin-top:12px"><button class="btn out" onclick="closeModal()">닫기</button><button class="btn sec pill" onclick="closeModal();toast('${t.name}님께 제안을 보냈습니다 (목업)')">제안 보내기</button></div></div>`;
+   <div class="card" style="margin-top:16px;background:var(--bg)"><b>제안할 공고</b><div class="stack" style="margin-top:8px">${["요양보호사 · 오전 9~12시","요양보호사 · 야간"].map((x,i)=>`<div class="check${(t.sel||[0]).includes(i)?" on":""}" onclick="(()=>{const s=t_sel(${t.id});const k=s.indexOf(${i});k<0?s.push(${i}):s.splice(k,1);openTalent(${t.id})})()"><span class="bx">${(t.sel||[0]).includes(i)?I.check:""}</span>${x}</div>`).join("")}</div><p class="cap" style="margin-top:8px">구직자에게 카카오톡으로 공고와 시설 정보(평가등급·급여·거리)가 전달됩니다. 수락률 평균 38%(가안).</p></div>
+   <div class="row" style="justify-content:space-between;margin-top:16px"><span>제안 ${(t.sel||[0]).length}건 <b>${((t.sel||[0]).length*5000).toLocaleString()}원</b> <span class="cap">미수락 시 환불</span></span></div>
+   <div class="two" style="margin-top:12px"><button class="btn out" onclick="closeModal()">닫기</button><button class="btn sec pill" ${(t.sel||[0]).length?"":"disabled"} onclick="closeModal();toast('${t.name}님께 제안을 보냈습니다 (목업)')">제안 보내기</button></div></div>`;
   ov.addEventListener("click",e=>{if(e.target===ov)closeModal();}); document.body.appendChild(ov);
 }
 const SCREENS={home,search,detail,start,biz,post,ads,talent};
-function render(){
-  const y=window.scrollY; $("app").innerHTML=SCREENS[S.screen](); window.scrollTo({top:y});
-  const userNav=[["home","홈"],["search","일자리 찾기"],["start","자격증이 없어요"]], bizNav=[["biz","기업 홈"],["post","공고 등록"],["talent","인재정보"],["ads","광고 상품"]];
-  $("nav").innerHTML=(S.mode==="biz"?bizNav:userNav).map(n=>`<button class="${S.screen===n[0]||(n[0]==='search'&&S.screen==='detail')?"on":""}" onclick="go('${n[0]}')">${n[1]}</button>`).join("");
-  $("m-user").classList.toggle("on",S.mode==="user");$("m-biz").classList.toggle("on",S.mode==="biz");
-}
-render();

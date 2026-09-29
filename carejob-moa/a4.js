@@ -21,19 +21,21 @@ function biz(){
   </div>`;
 }
 let P={fac:"방문요양",job:"요양보호사",sched:"오전만",pay:"",ins:true,payOpen:true,noLic:false,urgent:false,addr:"강남구 대치동",org:"해피케어 방문요양센터",hours:"오전 9~12시 · 주 5일",desc:""};
+function postPreviewCard(){return jobCard({id:0,top:false,urgent:P.urgent,caredoc:false,noLic:P.noLic,org:P.org||"시설 이름",fac:P.fac,title:`${P.job} 모집 · ${(P.hours||"").split(" ·")[0]}`,area:P.addr,dist:"도보 12분",hours:(P.hours||"").split(" · "),pay:P.pay||"급여 미입력",grade:"A",days:0,reviews:18}).replace(/onclick="[^"]*"/,"").replace(/onkeydown="[^"]*"/,"");}
+function postPreview(){const el=$("post-preview");if(el)el.innerHTML=postPreviewCard();}
 function post(){
   const opt=(arr,v)=>arr.map(x=>`<option${x===v?" selected":""}>${x}</option>`).join("");
   const ck=(k,label,help)=>`<div class="check${P[k]?" on":""}" onclick="P.${k}=!P.${k};render()"><span class="bx">${P[k]?I.check:""}</span><span>${label}<br><span class="cap">${help}</span></span></div>`;
   return `<div style="padding-block:24px" class="stack"><button class="btn out xs" style="align-self:flex-start" onclick="go('biz')">← 기업 홈</button><h1>공고 등록 <span class="tag gr" style="vertical-align:middle">무료</span></h1><p class="muted">5분이면 끝납니다. 구직자가 가장 먼저 보는 것은 시간·거리·급여입니다.</p></div>
   <div class="grid" style="grid-template-columns:1fr 380px">
   <form class="form card" onsubmit="event.preventDefault();toast('공고가 등록되었습니다 (무료)');go('biz')">
-    <div class="field"><label>시설 이름</label><input value="${esc(P.org)}" oninput="P.org=this.value"></div>
+    <div class="field"><label>시설 이름</label><input value="${esc(P.org)}" oninput="P.org=this.value;postPreview()"></div>
     <div class="field"><label>시설 종류</label><select onchange="P.fac=this.value;render()">${opt(FACS,P.fac)}</select></div>
     <div class="field"><label>모집 직종</label><select onchange="P.job=this.value;render()">${opt(JOB_TYPES,P.job)}</select></div>
     <div class="field"><label>근무 형태</label><select onchange="P.sched=this.value;render()">${opt(SCHEDS,P.sched)}</select></div>
-    <div class="field"><label>근무 시간·요일</label><input value="${esc(P.hours)}" oninput="P.hours=this.value" placeholder="예: 오전 9~12시 · 주 5일"><span class="help">구직자 화면에 그대로 보입니다. 짧고 정확하게.</span></div>
-    <div class="field"><label>근무지 주소</label><input value="${esc(P.addr)}" oninput="P.addr=this.value"><span class="help">동 단위로 노출 · 도보·버스 거리 자동 계산</span></div>
-    <div class="field"><label>급여</label><input placeholder="예: 시급 14,500원 / 월 235만원" value="${esc(P.pay)}" oninput="P.pay=this.value"></div>
+    <div class="field"><label>근무 시간·요일</label><input value="${esc(P.hours)}" oninput="P.hours=this.value;postPreview()" placeholder="예: 오전 9~12시 · 주 5일"><span class="help">구직자 화면에 그대로 보입니다. 짧고 정확하게.</span></div>
+    <div class="field"><label>근무지 주소</label><input value="${esc(P.addr)}" oninput="P.addr=this.value;postPreview()"><span class="help">동 단위로 노출 · 도보·버스 거리 자동 계산</span></div>
+    <div class="field"><label>급여</label><input placeholder="예: 시급 14,500원 / 월 235만원" value="${esc(P.pay)}" oninput="P.pay=this.value;postPreview()"></div>
     <div class="field"><label>담당자 연락처</label><input value="02-555-0123"></div>
     <div class="full grid g2">${ck("payOpen","급여 금액 공개","공개 시 지원율 상승 · '급여 공개' 표시")}${ck("ins","4대보험 가입","공고에 표시됩니다")}${ck("noLic","자격증 없어도 지원 가능","'자격증 없어도 가능' 표시 · 무자격자 진입 페이지에 노출")}${ck("urgent","급구 (유료 옵션)","'급구' 빨간 태그 · 3일 7,000원")}</div>
     <div class="field full"><label>상세 내용</label><textarea placeholder="하는 일, 우대 사항, 식사·주차 제공 여부 등" oninput="P.desc=this.value">${esc(P.desc)}</textarea></div>
@@ -41,7 +43,7 @@ function post(){
     <div class="full two"><button class="btn out" type="button" onclick="toast('임시 저장')">임시 저장</button><button class="btn pri pill" type="submit">무료로 등록하기</button></div>
   </form>
   <aside class="stack"><h3>구직자에게 이렇게 보입니다</h3>
-    ${jobCard({id:0,top:false,urgent:P.urgent,caredoc:false,noLic:P.noLic,org:P.org,fac:P.fac,title:`${P.job} 모집 · ${P.hours.split(" ·")[0]}`,area:P.addr,dist:"도보 12분",hours:P.hours.split(" · "),pay:P.pay||"급여 미입력",grade:"A",days:0,reviews:18}).replace(/onclick="[^"]*"/,"").replace(/onkeydown="[^"]*"/,"")}
+    <div id="post-preview">${postPreviewCard()}</div>
     <div class="card stack"><h3>더 많이 보이게 하려면</h3><p class="muted small">등록 후 상위노출(7일 3만원)을 붙이면 목록 최상단에 고정됩니다.</p><button class="btn out sm" type="button" onclick="go('ads')">광고 상품 보기</button></div>
   </aside></div>`;
 }
@@ -65,3 +67,4 @@ function ads(){
    <tr><td class="num">가격(가안)</td><td class="num">0원</td><td class="num" style="background:var(--primary-bg)">3만원/7일</td><td class="num">15만원/7일</td><td class="num">7천원/3일</td><td class="num">90원/건</td><td class="num">19만원/월</td></tr>
   </table></div>`;
 }
+let ORD=[0];
