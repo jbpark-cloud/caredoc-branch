@@ -1,1 +1,1 @@
-{"version":2,"rewrites":[{"source":"/((?!.*\.).*)","destination":"/index.html"}]}
+{"rewrites":[{"source":"/jobs/:path*","destination":"/index.html"},{"source":"/start","destination":"/index.html"},{"source":"/me","destination":"/index.html"},{"source":"/biz","destination":"/index.html"},{"source":"/biz/:path*","destination":"/index.html"}]}
