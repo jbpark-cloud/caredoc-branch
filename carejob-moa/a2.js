@@ -1,86 +1,75 @@
-function home(){
-  const gu=S.home.gu;
-  const cnt=t=>JOBS.filter(j=>j.job===t).length, urg=t=>JOBS.filter(j=>j.job===t&&j.urgent).length;
-  const FAC_ALL=["방문요양","주야간보호","요양원","요양병원","재활병원","일반 병원","복지관","실버타운","간병인 협회"];
-  const hp=S.home.pick; // {fac|gu|job|sched: value}
-  const hf={gu:hp.gu||null,fac:hp.fac?[hp.fac]:[],job:hp.job?[hp.job]:[],sched:hp.sched?[hp.sched]:[]};
-  const pool=JOBS.filter(j=>(!hf.gu||j.gu===hf.gu)&&(!hf.fac.length||hf.fac.includes(j.fac))&&(!hf.job.length||hf.job.includes(j.job))&&(!hf.sched.length||hf.sched.includes(j.sched)));
-  const plat=pool.filter(j=>j.top).sort((a,b)=>a.days-b.days);
-  const rest=pool.filter(j=>!j.top).sort((a,b)=>a.days-b.days);
-  const near=JOBS.filter(j=>j.gu===gu).sort((a,b)=>distNum(a.dist)-distNum(b.dist));
-  const good=JOBS.filter(j=>j.grade==="A"&&j.ins&&j.payOpen).sort((a,b)=>b.score-a.score).slice(0,4);
-  const caredoc=JOBS.filter(j=>j.caredoc);
-  const pins=near.slice(0,8).map((j,i)=>{const ang=i/8*Math.PI*2-1.2;const r=(46+distNum(j.dist)*3.2);return {j,x:300+Math.cos(ang)*r*1.85,y:118+Math.sin(ang)*r*0.62}});
-  const tab=S.home.tab;
-  const panel={
-    fac:FAC_ALL.map(f=>[f,JOBS.filter(j=>j.fac===f).length,JOBS.filter(j=>j.fac===f&&j.urgent).length]),
-    gu:GUS.filter(g=>g!=="전체").map(g=>[g,JOBS.filter(j=>j.gu===g).length,JOBS.filter(j=>j.gu===g&&j.urgent).length]),
-    job:JOB_TYPES.map(t=>[t,cnt(t),urg(t)]),
-    sched:SCHEDS.map(s=>[s,JOBS.filter(j=>j.sched===s).length,JOBS.filter(j=>j.sched===s&&j.urgent).length]),
-  }[tab];
-  const pickLabel={fac:"기관별",gu:"지역별",job:"직종별",sched:"근무시간별"};
-  const sel=Object.entries(hp).filter(([k,v])=>v);
-  // 기관별 그룹 목록
-  const groupMode=S.home.group;
-  let listHtml="";
-  if(groupMode==="fac"){
-    const shown=rest.slice(0,S.home.limit); const groups={};
-    shown.forEach(j=>{(groups[j.fac]=groups[j.fac]||[]).push(j)});
-    listHtml=FAC_ALL.filter(f=>groups[f]).map(f=>`<tr class="grp"><td colspan="7"><b>${f}</b> <span class="muted small">${JOBS.filter(j=>j.fac===f).length}건 중 ${groups[f].length}건</span> <button class="lnk" onclick="homePick('fac','${f}')">이 기관만 보기</button></td></tr>`+groups[f].map(listRow).join("")).join("");
-  } else if(groupMode==="gu"){
-    const shown=rest.slice(0,S.home.limit); const groups={};
-    shown.forEach(j=>{(groups[j.gu]=groups[j.gu]||[]).push(j)});
-    listHtml=Object.keys(groups).sort((a,b)=>a.localeCompare(b,"ko")).map(g=>`<tr class="grp"><td colspan="7"><b>${g}</b> <span class="muted small">${JOBS.filter(j=>j.gu===g).length}건 중 ${groups[g].length}건</span> <button class="lnk" onclick="homePick('gu','${g}')">이 지역만 보기</button></td></tr>`+groups[g].map(listRow).join("")).join("");
-  } else listHtml=rest.slice(0,S.home.limit).map(listRow).join("");
-  return `
-  <section class="top-strip"><div class="wrap">
-    <div class="locbar">
-      <div class="loc">${I.pin.replace('class="ico sm gy"','class="ico"')}<select id="home-gu" onchange="S.home.gu=this.value;render()">${GUS.filter(g=>g!=="전체").map(g=>`<option${gu===g?" selected":""}>${g}</option>`).join("")}</select><span class="cap">${near.length}개 자리 · 가까운 순</span></div>
-      <div class="stats"><span><b>${JOBS.length}</b>전체 공고</span><span><b>${JOBS.filter(j=>j.days===0).length}</b>오늘 새 공고</span><span><b>${JOBS.filter(j=>j.urgent).length}</b>급구</span><span><b>${JOBS.filter(j=>j.noLic).length}</b>자격증 없어도</span></div>
-    </div>
-    <div class="banner-row">
-      <div class="banner main" onclick="go('start')"><span class="tag" style="background:rgba(255,255,255,.2);color:#fff">자격증이 없어요</span><h2>오늘 시작할 수 있는 일부터,<br>요양보호사가 되는 길까지</h2><p>지금 가능한 ${JOBS.filter(j=>j.noLic).length}개 자리 · 교육 연결 · 상담 무료</p><b>진입 경로 보기 →</b></div>
-      <div class="banner ad" onclick="go('detail',${caredoc[0].id})"><span class="tag or">광고 · 메인 배너</span><h3>${esc(caredoc[0].org)}</h3><p>${esc(caredoc[0].title)}<br>${caredoc[0].pay} · ${caredoc[0].hours[0]}</p><span class="cap">케어닥 직영 · 공단 평가 ${caredoc[0].grade||"–"}등급</span></div>
-      <div class="banner biz" onclick="setMode('biz')"><span class="tag" style="background:rgba(255,255,255,.18);color:#fff">시설·병원 담당자</span><h3>공고 등록 0원</h3><p>우리 동네 구직자에게 바로 닿습니다</p><b>무료로 공고 올리기 →</b></div>
-    </div>
-  </div></section>
-  <div class="wrap">
-    <!-- 분류 패널: 기관별 · 지역별 · 직종별 · 근무시간별 -->
-    <div class="browse">
-      <div class="btabs">${Object.entries(pickLabel).map(([k,v])=>`<button class="${tab===k?"on":""}" onclick="S.home.tab='${k}';render()">${v}</button>`).join("")}<span class="sp"></span>${sel.length?`<span class="tag or" style="font-size:14px;padding:4px 6px 4px 12px">${pickLabel[sel[0][0]]} · ${sel[0][1]} <button class="x" onclick="S.home.pick={};render()">×</button></span>`:`<span class="cap">누르면 아래 목록이 바뀝니다</span>`}</div>
-      <div class="bgrid ${tab}">${panel.map(([name,n,u])=>`<button class="bitem${hp[tab]===name?" on":""}" onclick="homePick('${tab}','${name}')"><span>${name}</span><b>${n}</b>${u?`<em>급구 ${u}</em>`:""}</button>`).join("")}</div>
-    </div>
-    <!-- 플래티넘(상위노출) 채용정보 -->
-    <div class="sec-t"><div><h2>상위노출 채용정보 <span class="muted" style="font-size:16px">${plat.length}건</span></h2><p class="muted small">유료 상위노출 공고 · 주황 테두리</p></div><button onclick="setMode('biz');go('ads')">내 공고도 여기에 →</button></div>
-    ${plat.length?`<div class="feedgrid">${plat.slice(0,6).map(feedCard).join("")}</div>`:`<div class="card" style="text-align:center;color:var(--sub)">이 조건의 상위노출 공고는 아직 없어요. 아래 전체 목록을 봐 주세요.</div>`}
-    <!-- 전체 채용정보: 밀도 높은 목록 -->
-    <div class="sec-t" id="list-anchor" style="margin-bottom:10px;scroll-margin-top:80px"><div><h2>전체 채용정보 <span class="muted" style="font-size:16px">${rest.length}건</span></h2>
-      <div class="selrow">${sel.length?sel.map(([k,v])=>`<span class="tag or">${pickLabel[k]} · ${v} <button class="x" onclick="S.home.pick={};render()">×</button></span>`).join(""):'<span class="cap">분류를 고르지 않으면 서울 전체 최신 순</span>'}</div></div>
-      <div class="row"><span class="small muted">묶어 보기</span><div class="seg"><button class="${!groupMode?"on":""}" onclick="S.home.group='';render()">최신 순</button><button class="${groupMode==="fac"?"on":""}" onclick="S.home.group='fac';render()">기관별</button><button class="${groupMode==="gu"?"on":""}" onclick="S.home.group='gu';render()">지역별</button></div></div></div>
-    <div class="tbl listwrap"><table class="list">
-      <thead><tr><th class="c-day">등록</th><th class="c-org">기관명</th><th class="c-job">직종</th><th class="c-area">지역 · 거리</th><th class="c-time">근무시간</th><th class="c-pay">급여</th><th class="c-act"></th></tr></thead>
-      <tbody>${listHtml||`<tr><td colspan="7" class="empty">이 조건의 공고가 아직 없어요. 다른 분류를 골라 보세요.</td></tr>`}</tbody></table></div>
-    ${rest.length>S.home.limit?`<button class="btn out wide" style="margin-top:12px" onclick="S.home.limit+=30;render()">공고 더 보기 (${rest.length-S.home.limit}건 남음)</button>`:""}
-    <!-- 내 주변 지도 + 등급 좋은 시설 -->
-    <div class="sec-t"><div><h2>${gu} 내 주변</h2><p class="muted small">핀의 글자는 건강보험공단 평가등급 · 주황 핀은 상위노출</p></div><button onclick="S.f.gu='${gu}';go('search')">목록으로 →</button></div>
-    <div class="dsplit">
-      <div class="mapbox"><svg viewBox="0 0 600 236" aria-label="주변 지도 미리보기">
-        <rect width="600" height="236" fill="var(--bg)"/>
-        <g stroke="var(--line)" stroke-width="2" fill="none"><path d="M0 118h600M300 0v236M0 60h600M0 178h600M150 0v236M450 0v236"/></g>
-        <g stroke="var(--line)" stroke-width="7" fill="none" opacity=".7"><path d="M30 200 Q300 30 570 200"/><path d="M60 16 Q300 210 540 26"/></g>
-        <circle cx="300" cy="118" r="9" fill="var(--secondary)"/><circle cx="300" cy="118" r="18" fill="none" stroke="var(--secondary)" stroke-width="2" opacity=".5"/><text x="300" y="146" text-anchor="middle" font-size="12" fill="var(--sub)" font-family="inherit">내 위치</text>
-        ${pins.map(p=>`<g style="cursor:pointer" onclick="go('detail',${p.j.id})"><circle cx="${p.x.toFixed(0)}" cy="${p.y.toFixed(0)}" r="13" fill="${p.j.top?'var(--primary)':'var(--card)'}" stroke="var(--primary)" stroke-width="2"/><text x="${p.x.toFixed(0)}" y="${(p.y+4).toFixed(0)}" text-anchor="middle" font-size="11" font-weight="700" fill="${p.j.top?'#fff':'var(--primary)'}" font-family="inherit">${p.j.grade||"•"}</text><text x="${p.x.toFixed(0)}" y="${(p.y+27).toFixed(0)}" text-anchor="middle" font-size="11" fill="var(--title)" font-family="inherit">${esc(p.j.job)}</text></g>`).join("")}
-      </svg><div class="mapfoot"><span class="cap">실제 서비스에서는 카카오 지도 · 반경 조절</span><button class="btn out sm" onclick="toast('지도 전체 보기(2차)')">지도 크게 보기</button></div></div>
-      <div class="goodlist"><h3>등급 A · 4대보험 · 급여 공개 시설</h3>${good.map(j=>`<article class="mini-job" onclick="go('detail',${j.id})"><span class="grade"><b class="g${j.grade}">${j.grade}</b></span><div><b>${esc(j.org)}</b><span>${esc(j.job)} · ${j.pay} · ${j.dist}</span></div><span class="tag gr">후기 ${j.score}</span></article>`).join("")}</div>
-    </div>
-    <div class="sec-t"><div><h2>지역별 · 직종별 채용정보 바로가기</h2><p class="muted small">검색엔진 색인용 내부 링크 허브 (실서비스에서는 각 링크가 고정 URL 페이지)</p></div></div>
-    <div class="card linkhub">${["강남구","서초구","송파구","강동구","성동구","마포구","노원구","강서구"].map(g=>`<div><b>${g}</b>${["요양보호사","간병인","사회복지사","간호조무사","병원동행매니저"].map(t=>`<a href="/jobs/${g}/${t}" onclick="S.f={gu:'${g}',dong:'',job:['${t}'],sched:[],fac:[],noLic:false,sort:'near'};go('search');return false">${g} ${t} 구인</a>`).join("")}</div>`).join("")}</div>
-    <div class="sec-t"><h2>왜 케어잡모아인가요</h2></div>
-    <div class="grid g3 why">
-      <div class="card stack">${I.home}<h3>가까운 곳·맞는 시간부터</h3><p class="muted">도보·버스 정거장 기준 거리와 오전·주3일·야간·입주·단기 근무형태로 찾습니다.</p></div>
-      <div class="card stack">${I.shield.replace('class="ico sm"','class="ico"')}<h3>믿을 수 있는 시설인지 먼저</h3><p class="muted">공단 평가등급, 4대보험, 급여 공개 여부, 근무자 후기를 공고에 기본 표시합니다.</p></div>
-      <div class="card stack">${I.cert}<h3>자격증이 없어도 시작</h3><p class="muted">지금 가능한 일부터 요양보호사 자격 취득까지, 케어닥 교육과 이어드립니다.</p></div>
-    </div>
-  </div>
-  <nav class="tabbar five"><button class="on" onclick="go('home')">${I.tab_home}홈</button><button onclick="go('search')">${I.tab_list}일자리</button><button onclick="requireUser(()=>go('me'))">${I.tab_send}내 지원</button><button onclick="go('start')">${I.tab_cert}자격증</button><button onclick="setMode('biz')">${I.tab_biz}기업회원</button></nav>`;
+function seoFor(){
+  const f=S.f, base="케어잡모아";
+  switch(S.screen){
+    case "home": return {t:"케어잡모아 — 우리 동네 요양·돌봄 일자리 | 요양보호사·간병인 구인",d:`서울 요양보호사·간병인·사회복지사 일자리 ${JOBS.length}건. 집 근처·근무 시간·공단 평가등급으로 찾고 전화번호만으로 지원하세요.`};
+    case "search": { const gu=f.gu!=="전체"?f.gu:"서울", job=f.job.length===1?f.job[0]:"요양·돌봄"; const n=filtered().length; return {t:`${gu} ${job} 구인 ${n}건 | ${base}`,d:`${gu} ${job} 채용공고 ${n}건. 도보·버스 거리, 오전·주3일·야간 근무형태, 4대보험·급여 공개 여부까지 한눈에.`}; }
+    case "detail": { const j=S.job; return {t:`${j.org} ${j.job} 채용 · ${j.pay} · ${j.area} | ${base}`,d:`${j.title}. ${j.hours.join(" ")}, ${j.pay}. ${j.grade?"건강보험공단 평가 "+j.grade+"등급, ":""}${j.ins?"4대보험 가입":""}. 회원가입 없이 전화번호로 1분 지원.`}; }
+    case "facility": { const f=S.facil; return {t:`${f.org} 채용정보 · ${f.fac} · ${f.gu} | ${base}`,d:`${f.org}(${f.area}) 진행 중 공고 ${f.jobs.length}건. ${f.grade?"공단 평가 "+f.grade+"등급, ":""}4대보험 ${f.ins?"가입":"미가입"}, 근무자 후기 ${f.reviews}건.`}; }
+    case "guide": return {t:`${S.guide.title} | ${base}`,d:S.guide.lead};
+    case "guides": return {t:"돌봄 일자리 가이드 · 자격증·급여·직종별 시작 방법 | "+base,d:"요양보호사 자격증, 병원동행매니저, 요양보호사 월급, 간병인 되는 법."};
+    case "start": return {t:"자격증 없이 시작하는 돌봄 일자리 · 요양보호사 자격 취득 로드맵 | "+base,d:"병원동행·생활지원·조리보조 등 자격증 없이 지금 가능한 일과 요양보호사 자격 취득 4단계. 케어닥 교육원 상담 무료."};
+    case "biz": return {t:"기업회원 · 요양보호사·간병인 무료 채용공고 등록 | "+base,d:"복지관·요양원·요양병원·주야간보호 채용공고 등록 무료. 5060 구직자에게 동네 단위로 도달. 상위노출·급구·문자 알림."};
+    case "talent": return {t:"인재정보 · 요양·돌봄 구직자 프로필 | "+base,d:"동의한 구직자의 지역·자격·희망 시간 프로필. 열람 무료, 제안 발송 건당 과금."};
+    case "ads": return {t:"광고 상품 · 상위노출·메인 배너·급구·문자 알림 | "+base,d:"공고 등록 무료. 상위노출 7일 3만원부터."};
+    default: return {t:base,d:""};
+  }
+}
+function jobLD(j){
+  const [gu,dong]=j.area.split(" ");
+  return {"@context":"https://schema.org/","@type":"JobPosting","title":j.title,"description":`${j.duty.join(". ")}. 자격: ${j.req}`,"datePosted":new Date(Date.now()-j.days*864e5).toISOString().slice(0,10),"employmentType":j.sched==="단기"?"TEMPORARY":j.sched==="주3일"||j.sched==="오전만"?"PART_TIME":"FULL_TIME",
+    "hiringOrganization":{"@type":"Organization","name":j.org},"jobLocation":{"@type":"Place","address":{"@type":"PostalAddress","addressRegion":"서울특별시","addressLocality":gu,"streetAddress":dong,"addressCountry":"KR"}},
+    "baseSalary":{"@type":"MonetaryAmount","currency":"KRW","value":{"@type":"QuantitativeValue","value":parseInt(j.pay.replace(/[^\d]/g,""))*(j.pay.includes("만원")?10000:1),"unitText":j.pay.startsWith("시급")?"HOUR":j.pay.startsWith("일급")?"DAY":j.pay.startsWith("연봉")?"YEAR":"MONTH"}},
+    "identifier":{"@type":"PropertyValue","name":"carejobmoa","value":String(j.id)},"industry":"노인복지·요양","directApply":true};
+}
+function applySEO(push){
+  const s=seoFor(); document.title=s.t;
+  let m=document.querySelector('meta[name="description"]'); if(!m){m=document.createElement("meta");m.name="description";document.head.appendChild(m);} m.content=s.d;
+  let c=document.querySelector('link[rel="canonical"]'); if(!c){c=document.createElement("link");c.rel="canonical";document.head.appendChild(c);} c.href="https://carejobmoa.kr"+pathFor();
+  let ld=document.getElementById("ld-json"); if(S.screen==="detail"){ if(!ld){ld=document.createElement("script");ld.id="ld-json";ld.type="application/ld+json";document.head.appendChild(ld);} ld.textContent=JSON.stringify(jobLD(S.job)); } else if(ld) ld.remove();
+  const p=pathFor(); if(push&&location.protocol!=="file:"&&location.pathname!==p){ try{history.pushState({screen:S.screen,job:S.job&&S.job.id,f:S.f},"",p);}catch(e){} }
+}
+function routeFromPath(){
+  const seg=location.pathname.split("/").filter(Boolean).map(decodeURIComponent); if(!seg.length) return;
+  if(seg[0]==="jobs"){ if(seg[1]&&/^\d+-/.test(seg[1])){const id=parseInt(seg[1]);if(JOBS.find(j=>j.id===id)){S.job=JOBS.find(j=>j.id===id);S.screen="detail";return;}}
+    S.screen="search"; const rest=seg.slice(1).map(x=>x.replace(/-/g," "));
+    for(const r of rest){ if(GUS.includes(r))S.f.gu=r; else if(JOB_TYPES.includes(r))S.f.job=[r]; else if(r==="자격무관")S.f.noLic=true; } return; }
+  if(seg[0]==="start"){S.screen="start";return;}
+  if(seg[0]==="facility"&&seg[1]){const id=parseInt(seg[1]);const j=JOBS.find(x=>x.id===id);if(j){S.facil=facOf(j.org);S.screen="facility";return;}}
+  if(seg[0]==="guide"){ if(seg[1]){S.guide=GUIDES.find(g=>g.slug===seg[1])||GUIDES[0];S.screen="guide";} else S.screen="guides"; return; } if(seg[0]==="me"){S.screen="me";return;}
+  if(seg[0]==="biz"){S.mode="biz";S.screen={post:"post",talent:"talent",ads:"ads",me:"bizme"}[seg[1]]||"biz";return;}
+}
+window.addEventListener("popstate",()=>{ S.screen="home"; S.mode="user"; S.f={gu:"전체",dong:"",job:[],sched:[],fac:[],noLic:false,sort:"near"}; routeFromPath(); if(S.screen==="biz"||S.screen==="post"||S.screen==="talent"||S.screen==="ads"||S.screen==="bizme")S.mode="biz"; render(); applySEO(false); window.scrollTo({top:0}); });
+function go(screen,arg){ if(screen==="detail"){S.job=JOBS.find(j=>j.id===arg);} S.screen=screen; render(); applySEO(true); window.scrollTo({top:0}); }
+function homePick(tab,name){ const same=S.home.pick[tab]===name; S.home.pick=same?{}:{[tab]:name}; S.home.limit=30; render(); if(!same){ const el=$("list-anchor"); if(el){ el.scrollIntoView({behavior:"smooth",block:"start"}); el.classList.add("flash"); setTimeout(()=>el.classList.remove("flash"),1200);} } }
+function setMode(m){S.mode=m; go(m==="biz"?"biz":"home");}
+function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2200);}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+const I={
+ pin:'<svg class="ico sm gy" viewBox="0 0 24 24"><path d="M12 21s-6-5.5-6-10a6 6 0 0 1 12 0c0 4.5-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>',
+ clock:'<svg class="ico sm gy" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+ home:'<svg class="ico" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+ sun:'<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>',
+ cal:'<svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+ cert:'<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="9" r="5"/><path d="M8.5 13.5 7 22l5-3 5 3-1.5-8.5"/></svg>',
+ phone:'<svg class="ico sm" viewBox="0 0 24 24" style="color:currentColor"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg>',
+ shield:'<svg class="ico sm" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>',
+ tab_home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+ tab_list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
+ tab_send:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l16 8-16 8 3-8z"/></svg>',
+ tab_cert:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"/><path d="M8.5 13.5 7 22l5-3 5 3-1.5-8.5"/></svg>',
+ kakao:'<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 3C6.5 3 2 6.4 2 10.6c0 2.7 1.8 5 4.5 6.4l-1 3.8c-.1.3.3.6.6.4l4.4-2.9c.5.1 1 .1 1.5.1 5.5 0 10-3.4 10-7.8S17.5 3 12 3z"/></svg>',
+ tab_biz:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/></svg>',
+ chk:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" fill="rgba(255,255,255,.15)" stroke="none"/><path d="M7 12l3 3 7-7"/></svg>',
+ check:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>',
+};
+function gradeEl(g){ if(!g) return `<span class="grade"><b class="gN">–</b>평가 대상 아님</span>`; return `<span class="grade"><b class="g${g}">${g}</b>공단 평가 ${g}등급</span>`; }
+function stars(n){return "★".repeat(Math.round(n))+"☆".repeat(5-Math.round(n));}
+function jobCard(j){
+  return `<article class="card job${j.top?" top":""}" onclick="go('detail',${j.id})" tabindex="0" onkeydown="if(event.key==='Enter')go('detail',${j.id})">
+    <div class="org">${j.top?'<span class="tag or">상위노출</span>':''}${j.urgent?'<span class="tag rd">급구</span>':''}${j.caredoc?'<span class="tag bl">케어닥 직영</span>':''}${j.noLic?'<span class="tag gr">자격증 없어도 가능</span>':''}<span>${esc(j.org)} · ${j.fac}</span></div>
+    <h3>${esc(j.title)}</h3>
+    <div class="meta"><span>${I.pin}${j.area} · <b>${j.dist}</b></span><span>${I.clock}${j.hours.join(" · ")}</span></div>
+    <div class="pay">${j.pay}</div>
+    <div class="foot">${gradeEl(j.grade)}<span class="small muted">${j.days}일 전 · 후기 ${j.reviews}</span></div>
+  </article>`;
 }

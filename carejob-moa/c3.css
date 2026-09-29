@@ -1,1 +1,7 @@
+.dash{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media (max-width:720px){.dash{grid-template-columns:repeat(2,1fr)}}
+.dash .card b{font-size:28px;display:block;color:var(--title);font-variant-numeric:tabular-nums}
+.dash .card span{font-size:14px;color:var(--sub)}
+.dash .card.hi b{color:var(--primary)}
+.foot{margin-top:56px;border-top:1px solid var(--line);padding-block:24px;color:var(--sub);font-size:14px;background:var(--card)}
 .foot .wrap{display:flex;flex-direction:column}
