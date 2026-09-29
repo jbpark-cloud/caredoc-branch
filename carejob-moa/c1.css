@@ -1,3 +1,7 @@
+.mapfoot{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+.goodlist{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px 20px;display:flex;flex-direction:column;gap:4px}
+.goodlist h3{margin-bottom:8px}
+.mini-job{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line);cursor:pointer}
 .mini-job div{display:flex;flex-direction:column;min-width:0} .mini-job div b{font-size:16px;color:var(--title);white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .mini-job div span{font-size:14px;color:var(--sub)}
 .mini-job:hover b{color:var(--primary)}
 .hscroll{display:grid;grid-auto-flow:column;grid-auto-columns:300px;gap:12px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin;margin-inline:-16px;padding-inline:16px}
@@ -17,7 +21,7 @@
 .fcard .btns .btn{height:44px;font-size:15px}
 .why .card .ico{width:32px;height:32px}
 .tabbar{display:none}
-@media (max-width:720px){.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px))}
+@media (max-width:900px){.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px))}
 .tabbar button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;font-weight:600;color:var(--sub)}
 .tabbar button.on{color:var(--primary)} .tabbar svg{width:26px;height:26px} #app{padding-bottom:72px} .tabbar.five{grid-template-columns:repeat(5,1fr)}}
 .fcols{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:24px;width:100%}
@@ -77,25 +81,19 @@ table.list.talent .c-org b{max-width:220px}
 .vbanner{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border-radius:8px;padding:14px 18px;border:1px solid var(--line);background:var(--card)}
 .vbanner b{color:var(--title);font-size:16px} .vbanner p{font-size:14px;color:var(--sub);margin-top:2px}
 .vbanner.ok{background:var(--green-bg);border-color:transparent} .vbanner.pend{background:var(--info-bg);border-color:transparent} .vbanner.none{background:var(--bg)}
-.job{display:flex;flex-direction:column;gap:10px;cursor:pointer;position:relative}
-.job:hover{border-color:var(--primary)}
-.job .org{font-size:14px;color:var(--sub);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.job h3{font-size:19px;line-height:1.35}
-.job .meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:15px;color:var(--body)}
-.job .meta span{display:inline-flex;align-items:center;gap:4px}
-.job .pay{font-size:18px;font-weight:700;color:var(--title)}
-.job .foot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:10px;margin-top:2px}
-.job.top{border-color:var(--primary);border-width:2px}
-.grade{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:600;color:var(--sub)}
-.grade b{display:inline-flex;width:22px;height:22px;border-radius:50%;align-items:center;justify-content:center;color:#fff;font-size:12px}
-.gA{background:var(--green)} .gB{background:#3EC28F} .gC{background:var(--info)} .gD{background:var(--sub)} .gE{background:var(--red)} .gN{background:var(--disabled)}
-.search{display:grid;grid-template-columns:300px 1fr;gap:24px;padding-block:24px}
-@media (max-width:900px){.search{grid-template-columns:1fr}}
-.filter{position:sticky;top:88px;align-self:start;display:flex;flex-direction:column;gap:20px}
-@media (max-width:900px){.filter{position:static}}
-.filter h3{margin-bottom:8px}
-.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--card);cursor:pointer}
-.toggle .sw{width:48px;height:28px;border-radius:9999px;background:var(--line);position:relative;flex-shrink:0;transition:background .15s}
-.toggle .sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .15s}
-.toggle.on .sw{background:var(--green)} .toggle.on .sw::after{left:23px}
-.listhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.bhero{position:relative;background:var(--secondary);color:#fff;padding-block:48px 0;overflow:hidden}
+.bhero::before{content:"";position:absolute;inset:0;background:
+  radial-gradient(600px 300px at 85% 10%,rgba(255,103,55,.35),transparent 60%),
+  radial-gradient(500px 260px at 10% 100%,rgba(255,255,255,.10),transparent 60%),
+  repeating-linear-gradient(90deg,rgba(255,255,255,.04) 0 1px,transparent 1px 80px);pointer-events:none}
+.bhero-in{position:relative;max-width:1280px;margin:0 auto;display:grid;grid-template-columns:1.15fr 1fr;gap:40px;align-items:center;padding-bottom:40px}
+@media (max-width:900px){.bhero-in{grid-template-columns:1fr;gap:24px}}
+.bhero-eyebrow{display:inline-block;font-size:13px;font-weight:600;letter-spacing:.02em;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);border-radius:9999px;padding:5px 12px;margin-bottom:16px}
+.bhero h1{color:#fff;font-size:40px;line-height:1.18;letter-spacing:-0.04em;word-break:keep-all}
+.bhero h1 em{font-style:normal;color:var(--primary);background:rgba(255,255,255,.95);padding:0 10px;border-radius:8px}
+@media (max-width:720px){.bhero h1{font-size:30px}.bhero{padding-block:32px 0}}
+.bhero p{color:rgba(255,255,255,.85);margin-top:16px;font-size:17px;max-width:560px;word-break:keep-all}
+.bhero-cta{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap}
+.btn.ghost{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.45)}.btn.ghost:hover{background:rgba(255,255,255,.16)}
+.btn.xl{height:56px;font-size:17px;padding:0 24px}
+.bhero-check{list-style:none;margin:22px 0 0;padding:0;display:flex;gap:18px;flex-wrap:wrap;font-size:14px;color:rgba(255,255,255,.9)}

@@ -1,3 +1,41 @@
+.bhero-check li{display:inline-flex;align-items:center;gap:6px}
+.bhero-side{display:flex;flex-direction:column;gap:14px}
+.bhero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media (max-width:560px){.bhero-stats{grid-template-columns:repeat(2,1fr)}}
+.bhero-stats div{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:14px 12px;text-align:center}
+.bhero-stats b{display:block;font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.bhero-stats span{font-size:12px;color:rgba(255,255,255,.8);display:block;margin-top:4px}
+.bhero-card{background:#fff;color:var(--title);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;box-shadow:0 16px 40px rgba(0,0,0,.18)}
+.bhero-card .cap{color:var(--green);font-weight:600}.bhero-card .cap::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:5px;vertical-align:middle}
+.bhero-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.bhero-row .av{width:36px;height:36px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+.bhero-row div{display:flex;flex-direction:column;min-width:0}.bhero-row div b{font-size:15px;color:var(--title)}.bhero-row div span{font-size:13px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bhero-logos{position:relative;border-top:1px solid rgba(255,255,255,.15);padding:14px 0 16px;display:flex;gap:28px;align-items:center;flex-wrap:wrap;max-width:1280px;margin:0 auto}
+.bhero-logos span{font-size:12px;color:rgba(255,255,255,.6);white-space:nowrap}
+.bhero-logos b{font-size:15px;font-weight:700;color:rgba(255,255,255,.75);white-space:nowrap;letter-spacing:-0.02em}
+@media (max-width:720px){.bhero-logos{gap:16px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}}
+.job{display:flex;flex-direction:column;gap:10px;cursor:pointer;position:relative}
+.job:hover{border-color:var(--primary)}
+.job .org{font-size:14px;color:var(--sub);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.job h3{font-size:19px;line-height:1.35}
+.job .meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:15px;color:var(--body)}
+.job .meta span{display:inline-flex;align-items:center;gap:4px}
+.job .pay{font-size:18px;font-weight:700;color:var(--title)}
+.job .foot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:10px;margin-top:2px}
+.job.top{border-color:var(--primary);border-width:2px}
+.grade{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:600;color:var(--sub)}
+.grade b{display:inline-flex;width:22px;height:22px;border-radius:50%;align-items:center;justify-content:center;color:#fff;font-size:12px}
+.gA{background:var(--green)} .gB{background:#3EC28F} .gC{background:var(--info)} .gD{background:var(--sub)} .gE{background:var(--red)} .gN{background:var(--disabled)}
+.search{display:grid;grid-template-columns:300px 1fr;gap:24px;padding-block:24px}
+@media (max-width:900px){.search{grid-template-columns:1fr}}
+.filter{position:sticky;top:88px;align-self:start;display:flex;flex-direction:column;gap:20px}
+@media (max-width:900px){.filter{position:static}}
+.filter h3{margin-bottom:8px}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--card);cursor:pointer}
+.toggle .sw{width:48px;height:28px;border-radius:9999px;background:var(--line);position:relative;flex-shrink:0;transition:background .15s}
+.toggle .sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .15s}
+.toggle.on .sw{background:var(--green)} .toggle.on .sw::after{left:23px}
+.listhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
 .listhead select{height:40px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font-size:15px}
 .empty{padding:48px 20px;text-align:center;color:var(--sub);background:var(--card);border:1px dashed var(--line);border-radius:8px}
 .detail{display:grid;grid-template-columns:1fr 360px;gap:24px;padding-block:24px}

@@ -20,19 +20,22 @@ input,select,textarea{font-family:inherit;font-size:18px;letter-spacing:inherit;
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 .wrap{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:0}
 .hdr{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--card);border-bottom:1px solid var(--line)}
-.hdr .wrap{display:flex;align-items:center;gap:16px;height:64px}
+.hdr .wrap{display:flex;align-items:center;gap:12px;height:64px;flex-wrap:nowrap}
+.hdr .mode,.hdr .hicon,.hdr .logo,.hdr .nav{flex-shrink:0}
+.hsearch{flex-shrink:1;min-width:120px}
 .logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:22px;color:var(--title);white-space:nowrap}
 .logo i{width:26px;height:26px;border-radius:50%;background:var(--primary);display:inline-block;position:relative}
 .logo i::after{content:"";position:absolute;inset:8px;border-radius:50%;background:#fff}
 .logo small{font-size:12px;font-weight:600;color:var(--sub);margin-left:2px}
 .nav{display:flex;gap:4px;margin-left:8px}
-.nav button{background:none;border:0;padding:8px 12px;border-radius:8px;font-size:16px;font-weight:600;color:var(--sub)}
+.nav button{background:none;border:0;padding:8px 12px;border-radius:8px;font-size:16px;font-weight:600;color:var(--sub);white-space:nowrap}
 .nav button.on{color:var(--primary);background:var(--primary-bg)}
 .hdr .sp{flex:1}
 .mode{display:flex;border:1px solid var(--line);border-radius:9999px;padding:3px;gap:2px}
 .mode button{border:0;background:none;padding:6px 14px;border-radius:9999px;font-size:14px;font-weight:600;color:var(--sub);white-space:nowrap}
 .mode button.on{background:var(--secondary);color:#fff}
-@media (max-width:720px){.nav{display:none}.hdr .wrap{height:56px}.logo{font-size:20px}.logo small{display:none}.mode button{padding:6px 10px;font-size:13px}}
+@media (max-width:900px){.nav{display:none}.uchip{max-width:150px}.uchip b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+@media (max-width:720px){.hdr .wrap{height:56px}.logo{font-size:20px}.logo small{display:none}.mode button{padding:6px 10px;font-size:13px}}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:52px;padding:0 16px;border-radius:10px;font-size:16px;font-weight:600;border:1px solid transparent;transition:background .15s}
 .btn.pri{background:var(--primary);color:#fff}.btn.pri:hover{background:var(--primary-press)}
 .btn.out{background:var(--card);color:var(--title);border-color:var(--line)}
@@ -84,7 +87,8 @@ input,select,textarea{font-family:inherit;font-size:18px;letter-spacing:inherit;
 .hsearch button svg{width:16px;height:16px}
 .hicon{border:0;background:none;width:40px;height:40px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:var(--sub)}
 .hicon svg{width:24px;height:24px}
-@media (max-width:1100px){.hsearch{width:200px}.nav button{padding:8px 8px;font-size:15px}}
+@media (max-width:1240px){.hsearch{width:170px}.nav button{padding:8px 8px;font-size:15px}.nav{gap:0;margin-left:0}}
+@media (max-width:1120px){.hsearch{display:none}.hdr .wrap{gap:8px}#auth-slot .btn{padding:0 10px;font-size:14px}.mode button{padding:6px 10px;font-size:13px}.logo small{display:none}}
 @media (max-width:720px){.hsearch,.hicon{display:none}}
 .top-strip{background:var(--card);border-bottom:1px solid var(--line);margin-inline:-16px;padding-inline:16px;padding-block:16px 24px}
 .locbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
@@ -119,7 +123,3 @@ input,select,textarea{font-family:inherit;font-size:18px;letter-spacing:inherit;
 @media (max-width:900px){.dsplit{grid-template-columns:1fr}}
 .mapbox{background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .mapbox svg{width:100%;height:auto;display:block}
-.mapfoot{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
-.goodlist{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px 20px;display:flex;flex-direction:column;gap:4px}
-.goodlist h3{margin-bottom:8px}
-.mini-job{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line);cursor:pointer}
