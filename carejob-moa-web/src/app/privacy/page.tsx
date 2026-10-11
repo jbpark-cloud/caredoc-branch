@@ -43,8 +43,8 @@ export default function PrivacyPage() {
 
     <h2>5. 처리 위탁과 국외 이전</h2>
     <table><thead><tr><th>수탁자</th><th>위탁 업무</th><th>이전 국가·방법</th></tr></thead><tbody>
-      <tr><td>Supabase, Inc.</td><td>회원 인증, 데이터베이스 보관</td><td>데이터센터 소재국(서비스 개시 시 리전 확정 후 기재) · 네트워크 전송</td></tr>
-      <tr><td>Vercel, Inc.</td><td>웹 서비스 호스팅, 익명 이용 통계</td><td>미국 등 · 네트워크 전송</td></tr>
+      <tr><td>Supabase, Inc.</td><td>회원 인증, 데이터베이스 보관</td><td>대한민국(서울 리전, AWS ap-northeast-2) · 네트워크 전송</td></tr>
+      <tr><td>Vercel, Inc.</td><td>웹 서비스 호스팅, 익명 이용 통계</td><td>대한민국(서울 리전 서버), 미국 등(CDN·운영 로그) · 네트워크 전송</td></tr>
       <tr><td>(주)카카오</td><td>카카오 로그인</td><td>대한민국</td></tr>
       <tr><td>문자 발송 사업자(선정 후 기재)</td><td>인증번호·알림 문자 발송</td><td>선정 후 기재</td></tr>
     </tbody></table>
