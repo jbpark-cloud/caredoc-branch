@@ -6,11 +6,11 @@ import { JsonLd, GradeEl, JobTags, stars, phoneOf } from "./ui";
 import { ApplyButton, CallButton, SaveButton } from "./jobs";
 import CopyUrl from "./CopyUrl";
 
-export default function JobDetail({ j }: { j: Job }) {
+export default function JobDetail({ j, demo }: { j: Job; demo: boolean }) {
   const path = jobPath(j);
   return (
     <div className="detail pad-bar">
-      <JsonLd data={jobLD(j)} />
+      {!demo && <JsonLd data={jobLD(j)} />}
       <JsonLd data={breadcrumbLD([{ name: "홈", path: "/" }, { name: "일자리", path: "/jobs" }, { name: j.gu, path: `/jobs/${j.gu}` }, { name: j.job, path: `/jobs/${j.gu}/${j.job}` }, { name: j.org, path }])} />
       <section className="stack" style={{ gap: 16 }}>
         <nav className="crumb" aria-label="경로"><Link href="/">홈</Link><span>›</span><Link href="/jobs">일자리</Link><span>›</span><Link href={`/jobs/${j.gu}`}>{j.gu}</Link><span>›</span><Link href={`/jobs/${j.gu}/${j.job}`}>{j.job}</Link><span>›</span><b>{j.org}</b></nav>

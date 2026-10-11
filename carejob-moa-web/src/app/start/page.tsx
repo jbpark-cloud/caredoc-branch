@@ -7,8 +7,10 @@ import ConsultButton from "@/components/ConsultButton";
 
 export const metadata: Metadata = meta("자격증 없이 시작하는 돌봄 일자리 · 요양보호사 자격 취득 로드맵", "병원동행·생활지원·조리보조 등 자격증 없이 지금 가능한 일과 요양보호사 자격 취득 4단계. 케어닥 교육원 상담 무료.", "/start");
 
-export default function StartPage() {
-  const now = getJobs().filter(j => j.noLic);
+export const revalidate = 60;
+
+export default async function StartPage() {
+  const now = (await getJobs()).filter(j => j.noLic);
   const hi = { background: "var(--primary-bg)" };
   return <>
     <div style={{ paddingBlock: 24 }} className="stack">

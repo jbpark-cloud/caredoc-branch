@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
-import { getJob, filterJobs, filterFromUrl, urlFromFilter } from "@/lib/repo";
+import { getJob, getJobs, isDemo } from "@/lib/repo";
+import { filterJobs, filterFromUrl, urlFromFilter } from "@/lib/filter";
 import { meta, jobPath, parseIdSlug, breadcrumbLD, safeDecode } from "@/lib/seo";
 import { HUB_GU, HUB_JOBS } from "@/lib/constants";
 import JobDetail from "@/components/JobDetail";
@@ -14,31 +15,33 @@ interface Props { params: { segments?: string[] }; searchParams: SP }
 
 const isDetail = (seg?: string[]) => !!seg && seg.length === 1 && /^\d+(-|$)/.test(safeDecode(seg[0]));
 
-export function generateMetadata({ params, searchParams }: Props): Metadata {
+export const revalidate = 60;
+
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   if (isDetail(params.segments)) {
-    const j = getJob(parseIdSlug(params.segments![0])!);
+    const j = await getJob(parseIdSlug(params.segments![0])!);
     if (!j) return { title: "공고를 찾을 수 없습니다" };
     return meta(`${j.org} ${j.job} 채용 · ${j.pay} · ${j.area}`, `${j.title}. ${j.hours.filter(Boolean).join(" ")}, ${j.pay}. ${j.grade ? "건강보험공단 평가 " + j.grade + "등급, " : ""}${j.ins ? "4대보험 가입" : ""}. 회원가입 없이 전화번호로 1분 지원.`, jobPath(j));
   }
   const f = filterFromUrl(params.segments ?? [], searchParams);
   const gu = f.gu !== "전체" ? f.gu : "서울", job = f.job.length === 1 ? f.job[0] : f.noLic ? "자격증 없이 가능한 돌봄" : "요양·돌봄";
-  const n = filterJobs(f).length;
+  const n = filterJobs(await getJobs(), f).length;
   const canonical = urlFromFilter({ ...f, q: "", sort: "near", view: "list" }).split("?")[0];
   const hasQuery = !!(f.q || f.sched.length || f.fac.length || f.job.length > 1 || f.sort !== "near" || f.view === "card");
   return meta(`${gu} ${job} 구인 ${n}건`, `${gu} ${job} 채용공고 ${n}건. 도보·버스 거리, 오전·주3일·야간 근무형태, 4대보험·급여 공개 여부까지 한눈에.`, canonical, hasQuery ? { robots: { index: false, follow: true } } : {});
 }
 
-export default function JobsPage({ params, searchParams }: Props) {
+export default async function JobsPage({ params, searchParams }: Props) {
   if (isDetail(params.segments)) {
-    const j = getJob(parseIdSlug(params.segments![0])!);
+    const j = await getJob(parseIdSlug(params.segments![0])!);
     if (!j) notFound();
     const canon = jobPath(j);
     if ("/jobs/" + safeDecode(params.segments![0]) !== canon) permanentRedirect(encodeURI(canon));
-    return <JobDetail j={j} />;
+    return <JobDetail j={j} demo={isDemo()} />;
   }
   const f = filterFromUrl(params.segments ?? [], searchParams);
   const limit = Math.max(40, parseInt(String(searchParams.limit ?? "40"), 10) || 40);
-  const list = filterJobs(f);
+  const list = filterJobs(await getJobs(), f);
   const shown = list.slice(0, limit);
   const guLabel = f.gu === "전체" ? "서울" : f.gu;
   const title = `${guLabel}${f.q ? " " + f.q : ""} ${f.job.length === 1 ? f.job[0] + " " : ""}${f.noLic && f.job.length !== 1 ? "자격증 없이 가능한 " : ""}일자리`;

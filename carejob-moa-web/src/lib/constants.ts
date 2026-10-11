@@ -14,7 +14,7 @@ export const LIC_OPTIONS = ["요양보호사 자격증","간병인 교육 이수
 
 /** 광고 상품 (가안) */
 export const AD_PRODUCTS = [
-  { key: "top", name: "상위노출", desc: "지역·직종 목록 최상단 고정 + 주황 테두리", price: 30000, priceLabel: "30,000원", period: "7일", notes: ["30일 90,000원","같은 조건 무료 공고보다 평균 3~4배 조회(가안)","케어닥 앱 노출은 포함되지 않음"], hot: true },
+  { key: "top", name: "상위노출", desc: "지역·직종 목록 최상단 고정 + 주황 테두리", price: 30000, priceLabel: "30,000원", period: "7일", notes: ["30일 90,000원","지역·직종 목록에서 무료 공고보다 위에 고정","케어닥 앱 노출은 포함되지 않음"], hot: true },
   { key: "banner", name: "메인 배너", desc: "케어잡모아 첫 화면 '오늘 눈여겨볼 공고' 배너", price: 150000, priceLabel: "150,000원", period: "7일", notes: ["시설 브랜딩 · 로고·사진 노출","지역(구) 단위 타깃 선택","월 4개 시설만 판매"], hot: false },
   { key: "urgent", name: "급구 태그", desc: "빨간 '급구' 표시 + 최신순 상단", price: 7000, priceLabel: "7,000원", period: "3일", notes: ["상위노출과 함께 쓰면 할인","오늘 당장 필요할 때"], hot: false },
   { key: "sms", name: "동네 문자 알림", desc: "근무지 반경 3km 구직자에게 공고 문자 발송", price: 90, priceLabel: "건당 90원", period: "1회", notes: ["최소 200건 18,000원","수신 동의 구직자에게만 발송","야간 발송 없음 (08~20시)"], hot: false },
@@ -35,4 +35,18 @@ export const FAC_INTRO: Record<string, string> = {
   "복지관": "지역 어르신 대상 노인맞춤돌봄·여가·교육 프로그램을 운영하는 복지시설입니다.",
   "실버타운": "자립 생활이 가능한 어르신을 위한 노인복지주택입니다.",
   "간병인 협회": "병원 간병 인력을 교육·등록·배정하는 협회입니다.",
+};
+
+/** 사업자 표시 정보 — 빈 값은 화면에서 생략. 공개 전 실제 값으로 채울 것(전자상거래법·직업안정법 표시 의무) */
+export const COMPANY = {
+  name: "(주)케어닥",
+  ceo: process.env.NEXT_PUBLIC_COMPANY_CEO || "",
+  bizNo: process.env.NEXT_PUBLIC_COMPANY_BIZNO || "",              // 사업자등록번호
+  mailOrderNo: process.env.NEXT_PUBLIC_COMPANY_MAILORDER || "",    // 통신판매업 신고번호
+  jobInfoNo: process.env.NEXT_PUBLIC_COMPANY_JOBINFO || "",        // 직업정보제공사업 신고번호
+  address: process.env.NEXT_PUBLIC_COMPANY_ADDRESS || "",
+  tel: process.env.NEXT_PUBLIC_COMPANY_TEL || "",
+  email: process.env.NEXT_PUBLIC_COMPANY_EMAIL || "",
+  privacyOfficer: process.env.NEXT_PUBLIC_PRIVACY_OFFICER || "",   // 개인정보 보호책임자 성명·직책
+  privacyEmail: process.env.NEXT_PUBLIC_PRIVACY_EMAIL || "",
 };

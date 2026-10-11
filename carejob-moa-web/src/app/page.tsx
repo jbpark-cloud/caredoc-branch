@@ -7,13 +7,18 @@ import { GUIDES, guideShort } from "@/lib/data/guides";
 import { HUB_GU, HUB_JOBS, SITE_URL, SITE_NAME } from "@/lib/constants";
 import { meta } from "@/lib/seo";
 
-export const metadata: Metadata = meta("케어잡모아 — 우리 동네 요양·돌봄 일자리 | 요양보호사·간병인 구인", `서울 요양보호사·간병인·사회복지사 일자리 ${getJobs().length}건. 집 근처·근무 시간·공단 평가등급으로 찾고 전화번호만으로 지원하세요.`, "/");
+export const revalidate = 60;
+export async function generateMetadata(): Promise<Metadata> {
+  const n = (await getJobs()).length;
+  return meta("케어잡모아 — 우리 동네 요양·돌봄 일자리 | 요양보호사·간병인 구인", `서울 요양보호사·간병인·사회복지사 일자리 ${n}건. 집 근처·근무 시간·공단 평가등급으로 찾고 전화번호만으로 지원하세요.`, "/");
+}
 
-export default function HomePage() {
+export default async function HomePage() {
+  const jobs = await getJobs();
   const ld = { "@context": "https://schema.org", "@type": "WebSite", name: SITE_NAME, url: SITE_URL, potentialAction: { "@type": "SearchAction", target: `${SITE_URL}/jobs?q={search_term_string}`, "query-input": "required name=search_term_string" } };
   return <>
     <JsonLd data={ld} />
-    <HomeClient />
+    <HomeClient jobs={jobs} />
     <div className="sec-t"><div><h2>지역별 · 직종별 채용정보 바로가기</h2><p className="muted small">검색엔진 색인용 내부 링크 허브</p></div></div>
     <div className="card linkhub">{HUB_GU.map(g => <div key={g}><b>{g}</b>{HUB_JOBS.map(t => <Link key={t} href={`/jobs/${g}/${t}`}>{g} {t} 구인</Link>)}</div>)}</div>
     <div className="sec-t"><div><h2>돌봄 일자리 가이드</h2><p className="muted small">검색으로 들어온 분을 공고로 잇는 정보 콘텐츠</p></div><Link href="/guide">전체 보기 →</Link></div>

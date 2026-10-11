@@ -4,7 +4,10 @@ import { getJobs, listFacilities } from "@/lib/repo";
 import { GUIDES } from "@/lib/data/guides";
 import { jobPath, facilityPath } from "@/lib/seo";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const revalidate = 3600;
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const jobs = await getJobs(); const facs = await listFacilities();
   const now = new Date();
   const u = (path: string, changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"], priority: number, lastModified: Date = now) => ({ url: SITE_URL + encodeURI(path), lastModified, changeFrequency, priority });
   return [
@@ -13,7 +16,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...GU_LIST.map(g => u(`/jobs/${g}`, "daily", 0.8)),
     ...JOB_TYPES.map(t => u(`/jobs/${t}`, "daily", 0.8)),
     ...HUB_GU.flatMap(g => HUB_JOBS.map(t => u(`/jobs/${g}/${t}`, "daily", 0.7))),
-    ...getJobs().map(j => u(jobPath(j), "daily", 0.6, new Date(now.getTime() - j.days * 864e5))),
-    ...listFacilities().map(f => u(facilityPath(f), "weekly", 0.5)),
+    ...jobs.map(j => u(jobPath(j), "daily", 0.6, new Date(now.getTime() - j.days * 864e5))),
+    ...facs.map(f => u(facilityPath(f), "weekly", 0.5)),
   ];
 }

@@ -2,6 +2,10 @@
 
 케어닥 서브 브랜드 요양·돌봄 일자리 포털. 타깃 5060 여성 구직자 + 시설·병원(B2B 광고료 모델).
 
+## 시범 모드 원칙
+- DB 미연결 시 상단 '시범 운영' 띠 표시, 지원·공고는 저장되지 않음, JobPosting 구조화 데이터 출력 안 함
+- 지어낸 통계·제휴 시설명을 실서비스 화면에 노출하지 말 것(예시는 '예시' 태그)
+
 ## 명령
 - `npm run dev` — http://localhost:3000
 - `npm run build` — 타입체크·린트 포함. 커밋 전 반드시 통과
@@ -9,7 +13,12 @@
 
 ## 구조
 - `src/app` 라우트: `/`, `/jobs/[[...segments]]`(목록 /jobs/{구}/{직종}/자격무관 + 상세 /jobs/{id}-{slug}), `/facility/[slug]`, `/guide[/slug]`, `/start`, `/me`, `/biz`, `/biz/{post,talent,ads,me}`, `/api/*`, `sitemap.ts`, `robots.ts`
-- `src/lib/repo.ts` 데이터 접근 계층(현재 시드). Supabase 전환 시 이 파일만 교체
+- `src/lib/repo.ts` 서버 전용 데이터 계층: Supabase 키 있으면 실DB(노출 승인 공고), 없으면 시범 모드 시드. 클라이언트에서 import 금지 → 서버 페이지에서 props 로 전달
+- `src/lib/filter.ts` 클라이언트·서버 공용 순수 함수(필터·URL)
+- `src/lib/db/server.ts` `db()`=무캐시(쓰기·API), `dbRead()`=60초 캐시+태그 'jobs'. 쓰기 후 `revalidateTag("jobs")`
+- `src/app/api/*` session·seeker·apply·jobs·biz/{join,verify,jobs,applications}·orders·proposals·consult·admin
+- `/admin` 운영자 콘솔(ADMIN_EMAILS)
+- 실서비스 전환 절차: `docs/LAUNCH.md`
 - `src/lib/data/*` 시드(공고 240·인재 72·가이드 4). 프로토타입과 같은 id
 - `src/lib/seo.ts` slug·canonical·JSON-LD. URL은 한글 경로, 헤더·canonical에는 `encodeURI` 필수
 - `src/lib/auth/client.ts` 전화 OTP·카카오. env 없으면 목업(6자리 아무거나, 끝자리 0101 = 케어닥 회원)

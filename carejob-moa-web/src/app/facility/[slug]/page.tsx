@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
-import { getFacility, getJobs } from "@/lib/repo";
+import { getFacility, getJobs, isDemo } from "@/lib/repo";
+import { facilitiesFromJobs } from "@/lib/filter";
 import { meta, facilityPath, parseIdSlug, safeDecode, facilityLD, breadcrumbLD, jobPath } from "@/lib/seo";
 import { FAC_INTRO } from "@/lib/constants";
 import { JsonLd, stars, daysLabel, phoneOf } from "@/components/ui";
@@ -10,20 +11,22 @@ import FacilityAlert from "@/components/FacilityAlert";
 
 interface Props { params: { slug: string } }
 
-export function generateMetadata({ params }: Props): Metadata {
-  const id = parseIdSlug(params.slug); const f = id ? getFacility(id) : null;
+export const revalidate = 60;
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const id = parseIdSlug(params.slug); const f = id ? await getFacility(id) : null;
   if (!f) return { title: "시설을 찾을 수 없습니다" };
   return meta(`${f.org} 채용정보 · ${f.fac} · ${f.gu}`, `${f.org}(${f.area}) 진행 중 공고 ${f.jobs.length}건. ${f.grade ? "공단 평가 " + f.grade + "등급, " : ""}4대보험 ${f.ins ? "가입" : "미가입"}, 근무자 후기 ${f.reviews}건.`, facilityPath(f));
 }
 
-export default function FacilityPage({ params }: Props) {
-  const id = parseIdSlug(params.slug); const f = id ? getFacility(id) : null;
+export default async function FacilityPage({ params }: Props) {
+  const id = parseIdSlug(params.slug); const f = id ? await getFacility(id) : null;
   if (!f) notFound();
   if ("/facility/" + safeDecode(params.slug) !== facilityPath(f)) permanentRedirect(encodeURI(facilityPath(f)));
-  const nearby = [...new Set(getJobs().filter(j => j.fac === f.fac && j.gu === f.gu && j.org !== f.org).map(j => j.org))].slice(0, 4).map(o => getFacility(o)!);
+  const nearby = facilitiesFromJobs((await getJobs()).filter(j => j.fac === f.fac && j.gu === f.gu && j.org !== f.org)).slice(0, 4);
   return (
     <div style={{ paddingBlock: 24 }}>
-      <JsonLd data={facilityLD(f)} />
+      {!isDemo() && <JsonLd data={facilityLD(f)} />}
       <JsonLd data={breadcrumbLD([{ name: "홈", path: "/" }, { name: `${f.gu} ${f.fac}`, path: `/jobs/${f.gu}?fac=${f.fac}` }, { name: f.org, path: facilityPath(f) }])} />
       <nav className="crumb"><Link href="/">홈</Link><span>›</span><Link href={`/jobs/${f.gu}?fac=${encodeURIComponent(f.fac)}`}>{f.gu} {f.fac}</Link><span>›</span><b>{f.org}</b></nav>
       <div className="fac-head"><div><div className="row">{f.caredoc && <span className="tag bl">케어닥 직영</span>}<span className="tag gy">{f.fac}</span>{f.grade && <span className="tag gr">공단 평가 {f.grade}등급</span>}</div><h1 style={{ marginTop: 8 }}>{f.org}</h1><p className="muted">{f.area} · {FAC_INTRO[f.fac] ?? ""}</p></div>

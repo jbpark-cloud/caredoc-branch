@@ -1,78 +1,78 @@
-// 데이터 접근 계층. 지금은 시드 데이터(동기, 서버·클라이언트 공용).
-// Supabase 연결 시 이 파일의 함수만 async 로 바꾸고 supabase/*.ts 로 교체하면 화면 코드는 그대로.
-import type { Job, Facility, Talent, SearchFilter } from "./types";
-import { seedJobs } from "./data/seed-jobs";
+// 서버 전용 데이터 접근 계층. DB 연결 시 Supabase(노출 승인된 공고), 아니면 시범 모드 샘플.
+// 클라이언트 컴포넌트에서 import 금지 → 서버 페이지에서 읽어 props 로 넘긴다.
+import type { Job, Facility, Talent, Grade, Sched } from "./types";
+import { seedJobs, DUTY, REQ } from "./data/seed-jobs";
 import { seedTalents } from "./data/seed-talents";
-import { GU_LIST, JOB_TYPES } from "./constants";
-import { safeDecode } from "./seo";
+import { NOLIC_JOBS, GU_LIST } from "./constants";
+import { dbRead as db, isDemo } from "./db/server";
+import { facilitiesFromJobs } from "./filter";
 
-export const getJobs = (): Job[] => seedJobs();
-export const getJob = (id: number): Job | null => seedJobs().find(j => j.id === id) ?? null;
-export const getTalents = (): Talent[] => seedTalents();
+export { isDemo };
 
-export function getFacility(idOrOrg: number | string): Facility | null {
-  const JOBS = seedJobs();
-  const base = typeof idOrOrg === "number" ? JOBS.find(j => j.id === idOrOrg) : JOBS.find(j => j.org === idOrOrg);
-  if (!base) return null;
-  const js = JOBS.filter(j => j.org === base.org);
-  const j = js[0];
-  return { id: j.id, org: j.org, fac: j.fac, gu: j.gu, area: j.area, grade: j.grade, ins: j.ins, payOpen: j.payOpen, score: Math.max(...js.map(x => x.score)), reviews: js.reduce((a, x) => a + x.reviews, 0), caredoc: j.caredoc, jobs: js, rv: j.rv };
+interface JobRow {
+  id: number; org: string; fac: string; job: string; sched: string; title: string | null; hours: string | null; addr: string | null; gu: string | null; dong: string | null;
+  pay: string | null; contact: string | null; ins: boolean | null; pay_open: boolean | null; no_lic: boolean | null; urgent: boolean | null; top: boolean | null; caredoc: boolean | null;
+  description: string | null; head: number | null; benefits: string[] | null; created_at: string; businesses?: { grade: string | null } | null;
 }
 
-export function listFacilities(): Facility[] {
-  const seen = new Set<string>(); const out: Facility[] = [];
-  for (const j of seedJobs()) { if (seen.has(j.org)) continue; seen.add(j.org); const f = getFacility(j.org); if (f) out.push(f); }
-  return out;
+const SCHEDS = new Set(["오전만", "주간", "주3일", "야간", "입주", "단기"]);
+
+export function parseAddr(addr: string) {
+  const parts = (addr || "").split(/\s+/).filter(Boolean);
+  const gu = parts.find(p => (GU_LIST as readonly string[]).includes(p)) || parts.find(p => p.endsWith("구")) || "";
+  const dong = parts.find(p => /[동가로리]$/.test(p) && p !== gu) || "";
+  return { gu, dong };
 }
 
-export const GUS = ["전체", ...[...new Set(seedJobs().map(j => j.gu))].sort((a, b) => a.localeCompare(b, "ko"))];
-
-export const defaultFilter = (): SearchFilter => ({ gu: "전체", q: "", job: [], sched: [], fac: [], noLic: false, sort: "near", view: "list" });
-
-export function distNum(d: string) { const m = d.match(/\d+/); let n = m ? +m[0] : 0; if (d.includes("버스")) n = n * 4 + 5; if (d.includes("지하철")) n = n * 5 + 8; return n; }
-
-export function filterJobs(f: SearchFilter): Job[] {
-  const r = seedJobs().filter(j => (f.gu === "전체" || j.gu === f.gu) && (!f.q || j.area.includes(f.q) || j.job.includes(f.q) || j.org.includes(f.q) || j.title.includes(f.q)) && (!f.job.length || f.job.includes(j.job)) && (!f.sched.length || f.sched.includes(j.sched)) && (!f.fac.length || f.fac.includes(j.fac)) && (!f.noLic || j.noLic));
-  const top = r.filter(j => j.top), rest = r.filter(j => !j.top);
-  const sortf = { near: (a: Job, b: Job) => distNum(a.dist) - distNum(b.dist), new: (a: Job, b: Job) => a.days - b.days, grade: (a: Job, b: Job) => (a.grade || "F").localeCompare(b.grade || "F") }[f.sort];
-  return [...top.sort(sortf), ...rest.sort(sortf)];
+export function rowToJob(r: JobRow): Job {
+  const hp = (r.hours || "").split(" · ");
+  const desc = (r.description || "").split(/\n+/).map(s => s.trim()).filter(Boolean);
+  const gu = r.gu || parseAddr(r.addr || "").gu, dong = r.dong || parseAddr(r.addr || "").dong;
+  const benef = [...(r.ins ? ["4대보험"] : []), ...(r.benefits || [])];
+  return {
+    id: r.id, job: r.job, fac: r.fac, gu, area: [gu, dong].filter(Boolean).join(" ") || (r.addr || ""), sched: (SCHEDS.has(r.sched) ? r.sched : "주간") as Sched,
+    hours: [hp[0] || "", hp[1] || ""], pay: r.pay || "면접 시 협의", grade: ((r.businesses?.grade || "") as Grade), ins: !!r.ins, payOpen: r.pay_open !== false,
+    score: 0, reviews: 0, noLic: r.no_lic ?? NOLIC_JOBS.has(r.job), urgent: !!r.urgent, caredoc: !!r.caredoc, org: r.org, dist: "",
+    days: Math.max(0, Math.floor((Date.now() - new Date(r.created_at).getTime()) / 864e5)), top: !!r.top,
+    title: r.title || `${r.job} 모집${hp[0] ? " · " + hp[0] : ""}`, benef, duty: desc.length ? desc.slice(0, 8) : (DUTY[r.job] || []), req: REQ[r.job] || "",
+    head: r.head || 1, rv: [], contact: r.contact || undefined,
+  };
 }
 
-/** URL 세그먼트(/jobs/{구}/{직종}/자격무관) + 쿼리 → 필터 */
-export function filterFromUrl(segments: string[], sp: Record<string, string | string[] | undefined>): SearchFilter {
-  const f = defaultFilter();
-  for (const raw of segments) {
-    const s = safeDecode(raw).replace(/-/g, " ");
-    if ((GU_LIST as readonly string[]).includes(s)) f.gu = s;
-    else if ((JOB_TYPES as readonly string[]).includes(s)) f.job = [s];
-    else if (s === "자격무관") f.noLic = true;
-  }
-  const one = (k: string) => { const v = sp[k]; return Array.isArray(v) ? v[0] : v; };
-  const many = (k: string) => { const v = one(k); return v ? v.split(",").filter(Boolean) : []; };
-  if (one("q")) f.q = one("q")!;
-  if (many("job").length) f.job = many("job");
-  if (many("sched").length) f.sched = many("sched");
-  if (many("fac").length) f.fac = many("fac");
-  if (one("noLic") === "1") f.noLic = true;
-  if (one("gu")) f.gu = one("gu")!;
-  const sort = one("sort"); if (sort === "new" || sort === "grade") f.sort = sort;
-  if (one("view") === "card") f.view = "card";
-  return f;
+const JOB_COLS = "id,org,fac,job,sched,title,hours,addr,gu,dong,pay,contact,ins,pay_open,no_lic,urgent,top,caredoc,description,head,benefits,created_at,businesses(grade)";
+
+export async function getJobs(): Promise<Job[]> {
+  const c = db();
+  if (!c || process.env.NEXT_PUBLIC_DEMO === "1") return seedJobs();
+  const { data, error } = await c.from("jobs").select(JOB_COLS).eq("published", true).is("closed_at", null).order("created_at", { ascending: false }).limit(2000);
+  if (error) { console.error("[repo] jobs", error.message); return []; }
+  return (data as unknown as JobRow[]).map(rowToJob);
 }
 
-/** 필터 → 정규 URL. 구·단일 직종·자격무관은 경로로, 나머지는 쿼리로 */
-export function urlFromFilter(f: SearchFilter): string {
-  const gu = f.gu && f.gu !== "전체" ? f.gu : "";
-  const job = f.job.length === 1 ? f.job[0] : "";
-  const path = "/jobs" + (gu ? "/" + gu : "") + (job ? "/" + job : "") + (f.noLic && !job ? "/자격무관" : "");
-  const q = new URLSearchParams();
-  if (f.q) q.set("q", f.q);
-  if (f.job.length > 1) q.set("job", f.job.join(","));
-  if (f.sched.length) q.set("sched", f.sched.join(","));
-  if (f.fac.length) q.set("fac", f.fac.join(","));
-  if (f.noLic && job) q.set("noLic", "1");
-  if (f.sort !== "near") q.set("sort", f.sort);
-  if (f.view === "card") q.set("view", "card");
-  const qs = q.toString();
-  return path + (qs ? "?" + qs : "");
+export async function getJob(id: number): Promise<Job | null> {
+  const c = db();
+  if (!c || process.env.NEXT_PUBLIC_DEMO === "1") return seedJobs().find(j => j.id === id) ?? null;
+  const { data } = await c.from("jobs").select(JOB_COLS).eq("id", id).eq("published", true).maybeSingle();
+  return data ? rowToJob(data as unknown as JobRow) : null;
+}
+
+export async function getFacility(id: number): Promise<Facility | null> {
+  const base = await getJob(id); if (!base) return null;
+  const all = await getJobs();
+  const f = facilitiesFromJobs(all.filter(j => j.org === base.org))[0];
+  return f ?? facilitiesFromJobs([base])[0];
+}
+
+export async function listFacilities(): Promise<Facility[]> { return facilitiesFromJobs(await getJobs()); }
+
+/** 인재정보: 시범 모드 샘플 / DB 모드는 '다른 시설 연락 동의' 구직자 */
+export async function getTalents(): Promise<Talent[]> {
+  const c = db();
+  if (!c || process.env.NEXT_PUBLIC_DEMO === "1") return seedTalents();
+  const { data, error } = await c.from("seekers").select("id,name,lic,want_job,gu,dong,sched,age,memo,caredoc_linked,updated_at").eq("open_to_offers", true).order("updated_at", { ascending: false }).limit(500);
+  if (error || !data) return [];
+  return data.map((s, i) => {
+    const lic: string[] = (s.lic as string[] | null)?.length ? (s.lic as string[]) : ["없음"];
+    return { id: i + 1, uid: s.id as string, name: String(s.name || "회원").slice(0, 1) + "OO", age: (s.age as number) || 0, sex: "여", gu: (s.gu as string) || "", dong: (s.dong as string) || "", lic, job: (s.want_job as string) || (lic[0] === "없음" ? "병원동행매니저" : lic[0].replace(/ 자격증$/, "")), yrs: 0, sched: ((s.sched as Sched) || "주간"), days: "협의", pay: "협의", last: Math.max(0, Math.floor((Date.now() - new Date(s.updated_at as string).getTime()) / 864e5)), caredoc: !!s.caredoc_linked, care: s.caredoc_linked ? "케어닥 근무 이력 연동" : "", move: "—", memo: (s.memo as string) || "", noLic: lic[0] === "없음" } satisfies Talent;
+  });
 }

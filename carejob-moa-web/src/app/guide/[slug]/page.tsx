@@ -14,9 +14,11 @@ export function generateMetadata({ params }: Props): Metadata {
   return meta(g.title, g.lead, `/guide/${g.slug}`, { keywords: g.kw.split(", ") });
 }
 
-export default function GuidePage({ params }: Props) {
+export const revalidate = 300;
+
+export default async function GuidePage({ params }: Props) {
   const g = getGuide(safeDecode(params.slug)); if (!g) notFound();
-  const noLic = getJobs().filter(j => j.noLic).length;
+  const noLic = (await getJobs()).filter(j => j.noLic).length;
   const ld = { "@context": "https://schema.org", "@type": "Article", headline: g.title, description: g.lead, author: { "@type": "Organization", name: "케어잡모아" }, publisher: { "@type": "Organization", name: "케어닥" }, mainEntityOfPage: `${SITE_URL}/guide/${g.slug}` };
   return <div style={{ paddingBlock: 24 }}>
     <JsonLd data={ld} /><JsonLd data={breadcrumbLD([{ name: "홈", path: "/" }, { name: "돌봄 일자리 가이드", path: "/guide" }, { name: guideShort(g), path: `/guide/${g.slug}` }])} />

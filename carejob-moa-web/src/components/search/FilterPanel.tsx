@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import type { SearchFilter } from "@/lib/types";
-import { GUS, urlFromFilter, defaultFilter } from "@/lib/repo";
+import { GUS, urlFromFilter, defaultFilter } from "@/lib/filter";
 import { JOB_TYPES, SCHEDS, FACS } from "@/lib/constants";
 import { useAuth, useToast } from "../providers";
 

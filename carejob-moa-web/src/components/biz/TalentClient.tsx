@@ -1,12 +1,11 @@
 "use client";
 import { useMemo, useState } from "react";
-import { getTalents, GUS } from "@/lib/repo";
+import { GUS } from "@/lib/filter";
 import { JOB_TYPES, SCHEDS } from "@/lib/constants";
 import type { Talent } from "@/lib/types";
 import { useAuth } from "../providers";
 
-export default function TalentClient() {
-  const TALENTS = getTalents();
+export default function TalentClient({ talents: TALENTS }: { talents: Talent[] }) {
   const { biz, ready, open } = useAuth();
   const [f, setF] = useState({ gu: "전체", job: [] as string[], sched: [] as string[], lic: false, caredoc: false });
   const [limit, setLimit] = useState(30);

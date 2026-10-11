@@ -5,6 +5,8 @@ import Header from "@/components/Header";
 import Footer, { TabBar } from "@/components/Footer";
 import ModalHost from "@/components/ModalHost";
 import { SITE_URL, SITE_NAME } from "@/lib/constants";
+import { isDemo } from "@/lib/db/server";
+import { Analytics } from "@vercel/analytics/react";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -19,13 +21,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ko">
       <body>
-        <Providers>
+        <Providers demo={isDemo()}>
+          {isDemo() && <div className="demo-bar" role="note"><div className="wrap"><b>시범 운영 중</b> 지금 보이는 공고·시설·인재 정보는 서비스 예시이며 실제 채용이 아닙니다. 지원해도 시설에 전달되지 않습니다.</div></div>}
           <Header />
           <main id="app" className="wrap">{children}</main>
           <Footer />
           <TabBar />
           <ModalHost />
         </Providers>
+        <Analytics />
       </body>
     </html>
   );

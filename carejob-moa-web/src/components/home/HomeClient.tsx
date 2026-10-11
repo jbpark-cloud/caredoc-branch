@@ -2,7 +2,7 @@
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getJobs, GUS, distNum } from "@/lib/repo";
+import { GUS, distNum } from "@/lib/filter";
 import { FACS, JOB_TYPES, SCHEDS } from "@/lib/constants";
 import { jobPath } from "@/lib/seo";
 import type { Job } from "@/lib/types";
@@ -14,8 +14,7 @@ type Tab = "fac" | "gu" | "job" | "sched";
 const LABEL: Record<Tab, string> = { fac: "기관별", gu: "지역별", job: "직종별", sched: "근무시간별" };
 const KEY: Record<Tab, keyof Job> = { fac: "fac", gu: "gu", job: "job", sched: "sched" };
 
-export default function HomeClient() {
-  const JOBS = getJobs();
+export default function HomeClient({ jobs: JOBS }: { jobs: Job[] }) {
   const router = useRouter();
   const toast = useToast();
   const [gu, setGu] = useState("강남구");
@@ -32,6 +31,7 @@ export default function HomeClient() {
   const near = useMemo(() => JOBS.filter(j => j.gu === gu).sort((a, b) => distNum(a.dist) - distNum(b.dist)), [JOBS, gu]);
   const good = useMemo(() => JOBS.filter(j => j.grade === "A" && j.ins && j.payOpen).sort((a, b) => b.score - a.score).slice(0, 4), [JOBS]);
   const caredoc = JOBS.filter(j => j.caredoc);
+  const featured = caredoc[0] ?? JOBS.find(j => j.top) ?? JOBS[0];
   const noLicCount = JOBS.filter(j => j.noLic).length;
 
   const panel: [string, number, number][] = useMemo(() => {
@@ -67,7 +67,7 @@ export default function HomeClient() {
       </div>
       <div className="banner-row">
         <Link className="banner main" href="/start"><span className="tag" style={{ background: "rgba(255,255,255,.2)", color: "#fff" }}>자격증이 없어요</span><h2>오늘 시작할 수 있는 일부터,<br />요양보호사가 되는 길까지</h2><p>지금 가능한 {noLicCount}개 자리 · 교육 연결 · 상담 무료</p><b>진입 경로 보기 →</b></Link>
-        <Link className="banner ad" href={jobPath(caredoc[0])}><span className="tag or">광고 · 메인 배너</span><h3>{caredoc[0].org}</h3><p>{caredoc[0].title}<br />{caredoc[0].pay} · {caredoc[0].hours[0]}</p><span className="cap">케어닥 직영 · 공단 평가 {caredoc[0].grade || "–"}등급</span></Link>
+        {featured ? <Link className="banner ad" href={jobPath(featured)}><span className="tag or">광고 · 메인 배너</span><h3>{featured.org}</h3><p>{featured.title}<br />{featured.pay} · {featured.hours[0]}</p><span className="cap">{featured.caredoc ? "케어닥 직영 · " : ""}공단 평가 {featured.grade || "–"}등급</span></Link> : <Link className="banner ad" href="/biz/ads"><span className="tag or">광고 · 메인 배너</span><h3>이 자리에 우리 시설을</h3><p>첫 화면 배너로 동네 구직자에게 먼저 보입니다</p><span className="cap">7일 150,000원(가안)</span></Link>}
         <Link className="banner biz" href="/biz"><span className="tag" style={{ background: "rgba(255,255,255,.18)", color: "#fff" }}>시설·병원 담당자</span><h3>공고 등록 0원</h3><p>우리 동네 구직자에게 바로 닿습니다</p><b>무료로 공고 올리기 →</b></Link>
       </div>
     </div></section>

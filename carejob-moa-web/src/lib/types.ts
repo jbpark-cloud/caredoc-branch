@@ -34,6 +34,7 @@ export interface Job {
   req: string;
   head: number;
   rv: Review[];
+  contact?: string;
 }
 
 export interface Facility {
@@ -54,6 +55,7 @@ export interface Facility {
 
 export interface Talent {
   id: number;
+  uid?: string; // DB 모드 seekers.id
   name: string; // "김OO"
   age: number;
   sex: "여" | "남";
@@ -114,3 +116,6 @@ export interface BizUser {
   bizno?: string;
   ltc?: string;
 }
+
+/** 내 지원 내역(브라우저 보관 요약 + DB 모드는 서버 기록) */
+export interface AppliedItem { id: number; org: string; job: string; pay: string; path: string; at: number }

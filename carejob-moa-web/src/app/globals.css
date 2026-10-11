@@ -421,3 +421,8 @@ button.bitem,button.tile{font-family:inherit;letter-spacing:inherit}
 .search>section{min-width:0}
 .ftoggle{display:none}
 @media (max-width:900px){.ftoggle{display:flex;width:100%;justify-content:space-between;margin-bottom:12px}.filter{display:none}.filter.open{display:flex}}
+.demo-bar{background:var(--secondary);color:#fff;font-size:14px;line-height:1.45}
+.demo-bar .wrap{padding-block:8px}
+.demo-bar b{display:inline-block;background:#fff;color:var(--secondary);border-radius:9999px;padding:1px 10px;margin-right:8px;font-size:13px}
+.legal h2{font-size:20px}.legal p,.legal li{font-size:16px;line-height:1.7}.legal ol,.legal ul{padding-left:22px;margin:8px 0}
+.legal table{font-size:14px;margin:8px 0}.legal td,.legal th{vertical-align:top}

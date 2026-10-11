@@ -1,6 +1,7 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { SeekerUser, BizUser, Job, Talent } from "@/lib/types";
+import type { SeekerUser, BizUser, Job, Talent, AppliedItem } from "@/lib/types";
+import { supabase, authFetch } from "@/lib/auth/client";
 
 /* ---------- Toast ---------- */
 const ToastCtx = createContext<(msg: string) => void>(() => {});
@@ -15,17 +16,19 @@ export type ModalSpec =
   | { type: "talent"; talent: Talent };
 
 /* ---------- Auth ---------- */
-interface AuthState { user: SeekerUser | null; biz: BizUser | null; applied: number[]; alert: string | null; saved: number[] }
+interface AuthState { user: SeekerUser | null; biz: BizUser | null; applied: AppliedItem[]; alert: string | null; saved: number[] }
 interface Ctx extends AuthState {
   ready: boolean;
+  demo: boolean;
   setUser: (u: SeekerUser | null) => void;
   setBiz: (b: BizUser | null) => void;
   patchUser: (p: Partial<SeekerUser>) => void;
   patchBiz: (p: Partial<BizUser>) => void;
-  addApplied: (id: number) => void;
+  addApplied: (a: AppliedItem) => void;
   toggleSaved: (id: number) => void;
   setAlert: (s: string | null) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
+  refreshSession: () => Promise<void>;
   modal: ModalSpec | null;
   open: (m: ModalSpec) => void;
   close: () => void;
@@ -35,42 +38,69 @@ interface Ctx extends AuthState {
 const AuthCtx = createContext<Ctx | null>(null);
 export const useAuth = () => { const c = useContext(AuthCtx); if (!c) throw new Error("AuthProvider missing"); return c; };
 
-const KEY = "cjm.state.v1";
+const KEY = "cjm.state.v2";
 const empty: AuthState = { user: null, biz: null, applied: [], alert: null, saved: [] };
 
-export function Providers({ children }: { children: ReactNode }) {
+function load(): AuthState {
+  try {
+    const raw = localStorage.getItem(KEY); if (!raw) return empty;
+    const s = { ...empty, ...JSON.parse(raw) } as AuthState;
+    s.applied = Array.isArray(s.applied) ? s.applied.filter(a => a && typeof a === "object" && "id" in a) : [];
+    s.saved = Array.isArray(s.saved) ? s.saved.filter(n => typeof n === "number") : [];
+    return s;
+  } catch { return empty; }
+}
+
+export function Providers({ children, demo }: { children: ReactNode; demo: boolean }) {
   const [st, setSt] = useState<AuthState>(empty);
   const [ready, setReady] = useState(false);
   const [modal, setModal] = useState<ModalSpec | null>(null);
   const [toasts, setToasts] = useState<{ id: number; msg: string }[]>([]);
   const seq = useRef(0);
 
-  useEffect(() => { try { const raw = localStorage.getItem(KEY); if (raw) setSt({ ...empty, ...JSON.parse(raw) }); } catch {} setReady(true); }, []);
+  const refreshSession = useCallback(async () => {
+    const c = supabase(); if (!c) return;
+    const { data } = await c.auth.getSession();
+    if (!data.session) { setSt(s => ({ ...s, user: null, biz: null })); return; }
+    try {
+      const r = await authFetch("/api/session"); if (!r.ok) return;
+      const j = await r.json() as { seeker: SeekerUser | null; biz: BizUser | null };
+      setSt(s => ({ ...s, user: j.seeker, biz: j.biz }));
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    setSt(load()); setReady(true);
+    const c = supabase(); if (!c) return;
+    refreshSession();
+    const { data } = c.auth.onAuthStateChange((ev) => { if (ev === "SIGNED_OUT") setSt(s => ({ ...s, user: null, biz: null })); });
+    return () => data.subscription.unsubscribe();
+  }, [refreshSession]);
   useEffect(() => { if (ready) { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch {} } }, [st, ready]);
 
-  const toast = useCallback((msg: string) => { const id = ++seq.current; setToasts(t => [...t, { id, msg }]); setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 2200); }, []);
+  const toast = useCallback((msg: string) => { const id = ++seq.current; setToasts(t => [...t, { id, msg }]); setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 2400); }, []);
   const open = useCallback((m: ModalSpec) => setModal(m), []);
   const close = useCallback(() => setModal(null), []);
 
   const ctx = useMemo<Ctx>(() => ({
-    ...st, ready, modal, open, close,
+    ...st, ready, demo, modal, open, close, refreshSession,
     setUser: u => setSt(s => ({ ...s, user: u })),
     setBiz: b => setSt(s => ({ ...s, biz: b })),
     patchUser: p => setSt(s => s.user ? { ...s, user: { ...s.user, ...p } } : s),
     patchBiz: p => setSt(s => s.biz ? { ...s, biz: { ...s.biz, ...p } } : s),
-    addApplied: id => setSt(s => s.applied.includes(id) ? s : { ...s, applied: [...s.applied, id] }),
+    addApplied: a => setSt(s => s.applied.some(x => x.id === a.id) ? s : { ...s, applied: [a, ...s.applied].slice(0, 100) }),
     toggleSaved: id => setSt(s => ({ ...s, saved: s.saved.includes(id) ? s.saved.filter(x => x !== id) : [...s.saved, id] })),
     setAlert: a => setSt(s => ({ ...s, alert: a })),
-    logout: () => { setSt(s => ({ ...s, user: null, biz: null })); toast("로그아웃했습니다"); },
+    logout: async () => { const c = supabase(); if (c) await c.auth.signOut(); setSt(s => ({ ...s, user: null, biz: null })); toast("로그아웃했습니다"); },
     requireUser: then => { if (st.user) then(); else setModal({ type: "login", kind: "user", then }); },
     requireBiz: then => { if (st.biz) then(); else setModal({ type: "bizjoin", then }); },
-  }), [st, ready, modal, open, close, toast]);
+  }), [st, ready, demo, modal, open, close, toast, refreshSession]);
 
   return (
     <ToastCtx.Provider value={toast}>
       <AuthCtx.Provider value={ctx}>
         {children}
-        {toasts.map((t, i) => <div key={t.id} className="toast" style={{ bottom: 24 + i * 52 }}>{t.msg}</div>)}
+        <div aria-live="polite">{toasts.map((t, i) => <div key={t.id} className="toast" style={{ bottom: 24 + i * 52 }}>{t.msg}</div>)}</div>
       </AuthCtx.Provider>
     </ToastCtx.Provider>
   );
