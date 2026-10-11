@@ -57,7 +57,7 @@ create table if not exists jobs (
 );
 create index if not exists jobs_pub_idx on jobs (published, closed_at, created_at desc);
 create index if not exists jobs_biz_idx on jobs (business_id);
-create unique index if not exists jobs_external_uq on jobs (source, external_id) where external_id is not null;
+create unique index if not exists jobs_external_uq on jobs (source, external_id); -- 케어닥 앱 연동 upsert 키 (NULL 은 서로 겹치지 않음)
 
 -- 지원
 create table if not exists applications (
@@ -79,6 +79,7 @@ create index if not exists applications_biz_idx on applications (business_id, cr
 create table if not exists orders ( id bigserial primary key, business_id uuid references businesses(id) on delete set null, job_id bigint references jobs(id) on delete set null, product text not null, count int not null default 1, amount int not null, status text default 'pending', created_at timestamptz default now() );
 create table if not exists proposals ( id bigserial primary key, business_id uuid references businesses(id) on delete set null, talent_id bigint, seeker_id uuid references seekers(id) on delete set null, job_id bigint, count int default 1, amount int, status text default 'requested', accepted_at timestamptz, created_at timestamptz default now() );
 create table if not exists consults ( id bigserial primary key, type text, phone text, name text, source text, created_at timestamptz default now() );
+create table if not exists alerts ( id bigserial primary key, seeker_id uuid references seekers(id) on delete cascade, phone text not null, gu text, job text, sched text, active boolean default true, last_sent_at timestamptz, created_at timestamptz default now() );
 create table if not exists admin_logs ( id bigserial primary key, admin_email text, action text, target_id text, value text, created_at timestamptz default now() );
 
 -- RLS: 전부 켜고 anon/authenticated 정책은 두지 않는다(서버 service_role 만 접근)
@@ -90,8 +91,11 @@ alter table orders enable row level security;
 alter table proposals enable row level security;
 alter table consults enable row level security;
 alter table admin_logs enable row level security;
+alter table alerts enable row level security;
 
--- 개인정보 보관기간(개인정보처리방침과 일치): 지원 1년, 상담 6개월 경과 시 파기
--- Supabase → Database → Cron(pg_cron) 에서 매일 실행하도록 등록 권장:
---   delete from applications where created_at < now() - interval '1 year';
---   delete from consults where created_at < now() - interval '6 months';
+-- 이후 추가된 컬럼(이미 만든 DB에도 안전하게 적용)
+alter table businesses add column if not exists reminded_at timestamptz;
+alter table proposals add column if not exists token text;
+
+-- 개인정보 보관기간(지원 1년, 상담 6개월) 파기·미인증 리마인드·새 공고 알림은
+-- 앱의 /api/cron/daily (Vercel Cron, 매일 09:00 KST) 가 처리한다.

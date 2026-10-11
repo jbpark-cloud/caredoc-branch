@@ -2,6 +2,7 @@ import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { db, insert, userFromRequest, rateLimit, isDemo } from "@/lib/db/server";
 import { getJob } from "@/lib/repo";
+import { sendSms, site } from "@/lib/sms";
 
 export async function POST(req: Request) {
   if (!rateLimit(req, "apply", 8)) return NextResponse.json({ ok: false, msg: "잠시 후 다시 시도해 주세요" }, { status: 429 });
@@ -20,6 +21,10 @@ export async function POST(req: Request) {
   if (dup.data) return NextResponse.json({ ok: true, dup: true });
   const proxy = b.proxyPhone ? String(b.proxyPhone).replace(/\D/g, "").slice(0, 11) : null;
   const r = await insert("applications", { job_id: job.id, business_id: jr?.business_id ?? null, job_org: job.org, seeker_id: user?.id ?? null, name, phone, proxy_phone: proxy, lic: Array.isArray(b.lic) ? b.lic.slice(0, 10) : [], open_to_offers: !!b.openToOffers, consent_at: new Date().toISOString(), source: "web" });
+  if (r.ok && jr?.business_id) {
+    const { data: biz } = await c.from("businesses").select("manager_phone,org").eq("id", jr.business_id).maybeSingle();
+    if (biz?.manager_phone) await sendSms(biz.manager_phone, `[케어잡모아] ${job.job} 공고에 새 지원자 ${name}님(${(Array.isArray(b.lic) && b.lic[0]) || "자격 확인 필요"}). 연락처 확인: ${site("/biz")}`);
+  }
   if (r.ok && user) await c.from("seekers").upsert({ id: user.id, name, phone, lic: Array.isArray(b.lic) ? b.lic.slice(0, 10) : [], open_to_offers: !!b.openToOffers, gu: job.gu, want_job: job.job, updated_at: new Date().toISOString() });
   revalidateTag("jobs");
   return NextResponse.json(r, { status: r.ok ? 200 : 500 });

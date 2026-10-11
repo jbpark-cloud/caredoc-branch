@@ -58,7 +58,8 @@ export default async function JobsPage({ params, searchParams }: Props) {
         {list.length ? <>
           {f.view === "card" ? <div className="grid g2">{shown.map(j => <JobCard key={j.id} j={j} />)}</div> : <ListTable jobs={shown} />}
           {list.length > limit && <Link className="btn out wide" style={{ marginTop: 16 }} href={moreHref} scroll={false}>공고 더 보기 ({list.length - limit}건 남음)</Link>}
-        </> : <div className="empty"><p style={{ fontSize: 20, color: "var(--title)" }}>조건에 맞는 공고가 아직 없어요</p><p>조건을 하나 줄여 보시거나, 새 공고가 올라오면 문자로 알려드릴까요?</p><AlertButton label={`${guLabel} ${f.sched.join("·") || "전체"}`} /></div>}
+          <div className="card" style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}><div><b>이 조건의 새 공고, 문자로 받을까요?</b><p className="small muted">매일 아침 한 번만 보내드립니다. 내 정보에서 언제든 끌 수 있어요.</p></div><AlertButton label={`${guLabel} ${f.job.length === 1 ? f.job[0] + " " : ""}${f.sched.join("·") || "전체"}`} filter={f} /></div>
+        </> : <div className="empty"><p style={{ fontSize: 20, color: "var(--title)" }}>조건에 맞는 공고가 아직 없어요</p><p>조건을 하나 줄여 보시거나, 새 공고가 올라오면 문자로 알려드릴까요?</p><AlertButton label={`${guLabel} ${f.job.length === 1 ? f.job[0] + " " : ""}${f.sched.join("·") || "전체"}`} filter={f} /></div>}
         {f.gu !== "전체" && f.job.length !== 1 && <div className="card" style={{ marginTop: 24 }}><h3 style={{ marginBottom: 8 }}>{f.gu} 직종별 공고</h3><div className="chips">{HUB_JOBS.map(t => <Link key={t} className="chip" href={`/jobs/${f.gu}/${t}`}>{f.gu} {t}</Link>)}</div></div>}
         {f.job.length === 1 && <div className="card" style={{ marginTop: 24 }}><h3 style={{ marginBottom: 8 }}>다른 지역 {f.job[0]} 공고</h3><div className="chips">{HUB_GU.filter(g => g !== f.gu).map(g => <Link key={g} className="chip" href={`/jobs/${g}/${f.job[0]}`}>{g}</Link>)}</div></div>}
       </section>

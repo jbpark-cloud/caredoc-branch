@@ -5,6 +5,7 @@ import type { SearchFilter } from "@/lib/types";
 import { GUS, urlFromFilter, defaultFilter } from "@/lib/filter";
 import { JOB_TYPES, SCHEDS, FACS } from "@/lib/constants";
 import { useAuth, useToast } from "../providers";
+import { authFetch, authMode } from "@/lib/auth/client";
 
 export function FilterPanel({ filter }: { filter: SearchFilter }) {
   const router = useRouter();
@@ -38,7 +39,14 @@ export function ListHeadControls({ filter }: { filter: SearchFilter }) {
   </div>;
 }
 
-export function AlertButton({ label }: { label: string }) {
-  const { requireUser, setAlert } = useAuth(); const toast = useToast();
-  return <button className="btn pri pill" style={{ marginTop: 16 }} onClick={() => requireUser(() => { setAlert(label); toast("새 공고 알림을 신청했습니다"); })}>이 조건 새 공고 문자 받기</button>;
+export function AlertButton({ label, filter }: { label: string; filter?: SearchFilter }) {
+  const { requireUser, setAlert, demo } = useAuth(); const toast = useToast();
+  const save = async () => {
+    if (authMode() === "supabase" && !demo) {
+      const r = await authFetch("/api/alerts", { method: "POST", body: JSON.stringify({ gu: filter && filter.gu !== "전체" ? filter.gu : null, job: filter?.job.length === 1 ? filter.job[0] : null, sched: filter?.sched.length === 1 ? filter.sched[0] : null }) });
+      const j = await r.json().catch(() => ({})); if (!j.ok) { toast(j.msg || "신청하지 못했습니다"); return; }
+    }
+    setAlert(label); toast("새 공고가 올라오면 매일 아침 문자로 알려드릴게요");
+  };
+  return <button className="btn pri pill" style={{ marginTop: 16 }} onClick={() => requireUser(save)}>이 조건 새 공고 문자 받기</button>;
 }

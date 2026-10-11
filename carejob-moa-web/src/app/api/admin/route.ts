@@ -1,6 +1,7 @@
 import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { db, userFromRequest, isAdminEmail } from "@/lib/db/server";
+import { normalizeJob } from "@/lib/jobs/normalize";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,15 @@ export async function POST(req: Request) {
     case "urgent": ({ error } = await c.from("jobs").update({ urgent: !!b.value }).eq("id", id)); break;
     case "close": ({ error } = await c.from("jobs").update({ closed_at: b.value ? now : null }).eq("id", id)); break;
     case "order": ({ error } = await c.from("orders").update({ status: String(b.value || "done").slice(0, 20) }).eq("id", id)); break;
+    case "import": {
+      const rows: Record<string, unknown>[] = Array.isArray(b.rows) ? b.rows.slice(0, 1000) : [];
+      const good: Record<string, unknown>[] = []; const errors: { line: number; error: string }[] = [];
+      rows.forEach((r, i) => { const n = normalizeJob(r); if (n.ok) good.push({ ...n.row, caredoc: !!b.caredoc, published: true, source: "admin" }); else errors.push({ line: i + 2, error: n.error }); });
+      if (good.length) ({ error } = await c.from("jobs").insert(good));
+      if (!error) await c.from("admin_logs").insert({ admin_email: admin.email, action: "import", target_id: String(good.length), value: errors.length ? `${errors.length} errors` : null });
+      revalidateTag("jobs");
+      return NextResponse.json({ ok: !error, saved: error ? 0 : good.length, errors, msg: error?.message });
+    }
     default: return NextResponse.json({ ok: false, msg: "알 수 없는 조치" }, { status: 400 });
   }
   revalidateTag("jobs");

@@ -4,10 +4,11 @@ import { supabase, authFetch, authMode } from "@/lib/auth/client";
 import { useToast } from "../providers";
 import { fmtPhone } from "../ui";
 import { BIZ_STATUS_LABEL } from "@/lib/constants";
+import CsvImport from "./CsvImport";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Data = { businesses: any[]; jobs: any[]; applications: any[]; orders: any[]; consults: any[]; proposals: any[] };
-type Tab = "biz" | "jobs" | "apps" | "orders" | "consults";
+type Tab = "biz" | "jobs" | "import" | "apps" | "orders" | "consults";
 const d = (s: string) => new Date(s).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
 export default function AdminClient() {
@@ -45,7 +46,7 @@ export default function AdminClient() {
 
   const D = data!;
   const pending = D.businesses.filter(b => b.status === "pending");
-  const tabs: [Tab, string, number][] = [["biz", "기업 인증", pending.length], ["jobs", "공고", D.jobs.filter(j => !j.published && !j.closed_at).length], ["apps", "지원", D.applications.length], ["orders", "광고 신청", D.orders.filter(o => o.status === "pending").length], ["consults", "교육 상담", D.consults.length]];
+  const tabs: [Tab, string, number][] = [["biz", "기업 인증", pending.length], ["jobs", "공고", D.jobs.filter(j => !j.published && !j.closed_at).length], ["import", "공고 일괄 등록", 0], ["apps", "지원", D.applications.length], ["orders", "광고 신청", D.orders.filter(o => o.status === "pending").length], ["consults", "교육 상담", D.consults.length]];
   return <div style={{ paddingBlock: 24 }}>
     <div className="row" style={{ justifyContent: "space-between" }}><h1>운영자 콘솔</h1><button className="btn out sm" onClick={load}>새로고침</button></div>
     <div className="dash" style={{ marginTop: 16 }}>
@@ -69,6 +70,7 @@ export default function AdminClient() {
         <td>{j.closed_at ? <span className="tag gy">마감</span> : j.published ? <span className="tag gr">노출</span> : <span className="tag bl">미노출</span>}{j.top && <span className="tag or" style={{ marginLeft: 4 }}>상위</span>}{j.urgent && <span className="tag rd" style={{ marginLeft: 4 }}>급구</span>}</td>
         <td style={{ whiteSpace: "nowrap" }}><button className="btn out xs" onClick={() => act("publish", j.id, !j.published)}>{j.published ? "내리기" : "노출"}</button> <button className="btn out xs" onClick={() => act("top", j.id, !j.top)}>{j.top ? "상위 해제" : "상위노출"}</button> <button className="btn out xs" onClick={() => act("urgent", j.id, !j.urgent)}>{j.urgent ? "급구 해제" : "급구"}</button></td></tr>)}
         {!D.jobs.length && <tr><td colSpan={4} className="muted">등록된 공고가 없습니다.</td></tr>}</tbody></table>}
+      {tab === "import" && <CsvImport onDone={load} />}
       {tab === "apps" && <table><thead><tr><th>지원일</th><th>공고</th><th>지원자</th></tr></thead><tbody>{D.applications.map(a => <tr key={a.id}><td>{d(a.created_at)}</td><td>#{a.job_id} {a.job_org}</td><td>{a.name} · {fmtPhone(a.phone)}</td></tr>)}{!D.applications.length && <tr><td colSpan={3} className="muted">아직 지원이 없습니다.</td></tr>}</tbody></table>}
       {tab === "orders" && <table><thead><tr><th>신청일</th><th>상품</th><th className="num">금액</th><th>상태</th><th></th></tr></thead><tbody>{D.orders.map(o => { const b = D.businesses.find(x => x.id === o.business_id); return <tr key={o.id}><td>{d(o.created_at)}</td><td>{o.product} × {o.count}<span className="cap" style={{ display: "block" }}>{b ? `${b.org} · ${b.manager_name} ${fmtPhone(b.manager_phone || "")}` : "비회원"}</span></td><td className="num">{o.amount.toLocaleString()}원</td><td><span className={`tag ${o.status === "pending" ? "bl" : o.status === "paid" ? "gr" : "gy"}`}>{({ pending: "확인 대기", paid: "입금 완료", canceled: "취소" } as Record<string, string>)[o.status] || o.status}</span></td><td style={{ whiteSpace: "nowrap" }}><button className="btn out xs" onClick={() => act("order", o.id, "paid")}>입금 확인</button> <button className="btn out xs" onClick={() => act("order", o.id, "canceled")}>취소</button></td></tr>; })}{!D.orders.length && <tr><td colSpan={5} className="muted">광고 신청이 없습니다.</td></tr>}</tbody></table>}
       {tab === "consults" && <table><thead><tr><th>신청일</th><th>종류</th><th>연락처</th></tr></thead><tbody>{D.consults.map(c => <tr key={c.id}><td>{d(c.created_at)}</td><td>{c.type === "education" ? "요양보호사 교육 상담" : c.type}</td><td>{c.name ? c.name + " · " : ""}{fmtPhone(c.phone || "")}</td></tr>)}{!D.consults.length && <tr><td colSpan={3} className="muted">상담 신청이 없습니다.</td></tr>}</tbody></table>}

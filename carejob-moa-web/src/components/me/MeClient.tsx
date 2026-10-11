@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../providers";
@@ -8,7 +8,8 @@ import { fmtPhone } from "../ui";
 import { authFetch, authMode } from "@/lib/auth/client";
 
 export default function MeClient() {
-  const { user, ready, open, applied, alert, patchUser, logout } = useAuth();
+  const { user, ready, open, applied, alert, patchUser, logout, setAlert, demo } = useAuth();
+  const [confirmDel, setConfirmDel] = useState(false);
   const router = useRouter(); const leaving = useRef(false);
   useEffect(() => { if (ready && !user && !leaving.current) open({ type: "login", kind: "user", then: () => {} }); }, [ready, user, open]);
   if (!ready) return <div style={{ paddingBlock: 48 }} className="muted">불러오는 중…</div>;
@@ -21,7 +22,10 @@ export default function MeClient() {
         <div className="hr" /><Check on={user.open} onClick={() => saveOpen(!user.open)}>다른 시설에서도 연락받을게요<br /><span className="cap">이름은 성만 남기고(김OO) 지역·자격·희망 시간만 시설에 보입니다. 연락처는 내가 수락해야 공개.</span></Check></div>
       <div className="card stack"><h3>내 지원 내역</h3>{!applied.length && <p className="muted">아직 지원한 공고가 없어요.</p>}{applied.map(a => <Link key={a.id} href={a.path} className="mini-job"><span className="tag or">지원함</span><div><b>{a.org}</b><span>{a.job} · {a.pay}</span></div><span className="cap">{new Date(a.at).toLocaleDateString("ko-KR")}</span></Link>)}
         <div className="hr" /><h3>새 공고 문자 알림</h3><p className="muted small">{alert ? `${alert} 조건으로 새 공고가 오면 문자로 알려드립니다.` : "탐색 화면에서 조건을 고르고 '새 공고 문자 받기'를 누르세요."}</p>
-        <button className="btn out sm" style={{ alignSelf: "flex-start", marginTop: 8 }} onClick={async () => { leaving.current = true; await logout(); router.push("/"); }}>로그아웃</button></div>
+        {alert && <button className="btn out xs" style={{ alignSelf: "flex-start" }} onClick={async () => { if (authMode() === "supabase" && !demo) await authFetch("/api/alerts", { method: "DELETE" }); setAlert(null); }}>알림 끄기</button>}
+        <button className="btn out sm" style={{ alignSelf: "flex-start", marginTop: 8 }} onClick={async () => { leaving.current = true; await logout(); router.push("/"); }}>로그아웃</button>
+        <div className="hr" />{!confirmDel ? <button className="lnk" style={{ margin: 0, color: "var(--sub)", alignSelf: "flex-start" }} onClick={() => setConfirmDel(true)}>회원 탈퇴</button>
+          : <div className="vbanner none"><div><b>정말 탈퇴할까요?</b><p>내 정보와 연락 동의, 알림이 바로 삭제됩니다. 이미 시설에 전달된 지원 기록은 1년 뒤 자동 파기됩니다.</p></div><div className="row"><button className="btn out sm" onClick={() => setConfirmDel(false)}>취소</button><button className="btn sm" style={{ background: "var(--red)", color: "#fff" }} onClick={async () => { leaving.current = true; if (authMode() === "supabase" && !demo) { const r = await authFetch("/api/me/delete", { method: "POST" }); if (!r.ok) { leaving.current = false; return; } } setAlert(null); await logout(); router.push("/"); }}>탈퇴하기</button></div></div>}</div>
     </div>
   </>;
 }
