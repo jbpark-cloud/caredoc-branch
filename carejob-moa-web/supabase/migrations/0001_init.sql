@@ -92,6 +92,8 @@ alter table proposals enable row level security;
 alter table consults enable row level security;
 alter table admin_logs enable row level security;
 alter table alerts enable row level security;
+-- 이중 차단: 브라우저 역할의 테이블 권한 자체를 회수 (service_role 은 유지)
+revoke all on seekers, businesses, jobs, applications, orders, proposals, consults, alerts, admin_logs from anon, authenticated;
 
 -- 이후 추가된 컬럼(이미 만든 DB에도 안전하게 적용)
 alter table businesses add column if not exists reminded_at timestamptz;
