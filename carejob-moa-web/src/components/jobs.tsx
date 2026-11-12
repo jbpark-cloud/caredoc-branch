@@ -29,7 +29,7 @@ export function JobCard({ j, preview }: { j: Job; preview?: boolean }) {
   return (
     <article className={`card job${j.top ? " top" : ""}`} onClick={go} tabIndex={preview ? -1 : 0} onKeyDown={e => { if (e.key === "Enter") go(); }}>
       <div className="org"><JobTags j={j} /><span>{j.org} · {j.fac}</span></div>
-      <h3>{preview ? j.title : <Link href={jobPath(j)} onClick={e => e.stopPropagation()}>{j.title}</Link>}</h3>
+      <h3>{preview ? j.title : <Link prefetch={false} href={jobPath(j)} onClick={e => e.stopPropagation()}>{j.title}</Link>}</h3>
       <div className="meta"><span><Ico.pin />{j.area}{j.dist ? <> · <b>{j.dist}</b></> : null}</span><span><Ico.clock />{j.hours.filter(Boolean).join(" · ")}</span></div>
       <div className="pay">{j.pay}</div>
       <div className="foot"><GradeEl g={j.grade} /><span className="small muted">{daysLabel(j.days)}{j.reviews ? ` · 후기 ${j.reviews}` : ""}</span></div>
@@ -43,7 +43,7 @@ export function ListRow({ j }: { j: Job }) {
   return (
     <tr className={`lr${j.urgent ? " urg" : ""}`} onClick={() => router.push(jobPath(j))}>
       <td className="c-day"><span className={j.days === 0 ? "new" : ""}>{daysLabel(j.days)}</span><span className="cap">{j.head}명 · 채용시까지</span></td>
-      <td className="c-org"><b><Link href={jobPath(j)} onClick={e => e.stopPropagation()} style={{ color: "inherit" }}>{j.org}</Link></b><span className="rt">{j.urgent && <span className="tag rd">급구</span>}{j.caredoc && <span className="tag bl">케어닥 직영</span>}{j.noLic && <span className="tag gr">자격증 없어도</span>}<span className="cap">{j.fac}</span><GradeEl g={j.grade} /></span></td>
+      <td className="c-org"><b><Link prefetch={false} href={jobPath(j)} onClick={e => e.stopPropagation()} style={{ color: "inherit" }}>{j.org}</Link></b><span className="rt">{j.urgent && <span className="tag rd">급구</span>}{j.caredoc && <span className="tag bl">케어닥 직영</span>}{j.noLic && <span className="tag gr">자격증 없어도</span>}<span className="cap">{j.fac}</span><GradeEl g={j.grade} /></span></td>
       <td className="c-job">{j.job}<span className="cap">{j.title}</span></td>
       <td className="c-area">{j.area}{j.dist && <span className="cap or">{j.dist}</span>}</td>
       <td className="c-time">{j.hours[0]}<span className="cap">{[j.hours[1], j.sched].filter(Boolean).join(" · ")}</span></td>
@@ -68,7 +68,7 @@ export function FeedCard({ j }: { j: Job }) {
   return (
     <article className={`fcard${j.top ? " top" : ""}`} onClick={() => router.push(jobPath(j))}>
       <div className="pay">{j.pay}</div><div className="dist">{j.dist || j.gu}</div>
-      <h3><Link href={jobPath(j)} onClick={e => e.stopPropagation()}>{j.title}</Link></h3>
+      <h3><Link prefetch={false} href={jobPath(j)} onClick={e => e.stopPropagation()}>{j.title}</Link></h3>
       <div className="org"><JobTags j={j} short /><span>{j.org} · {j.area}</span></div>
       <div className="meta"><span><Ico.clock />{j.hours.filter(Boolean).join(" · ")}</span><GradeEl g={j.grade} /><span className="small muted">{daysLabel(j.days)}</span></div>
       <div className="btns"><CallButton job={j} /><ApplyButton job={j} className="btn pri pill">간편 지원하기</ApplyButton></div>
@@ -78,7 +78,7 @@ export function FeedCard({ j }: { j: Job }) {
 
 export function MiniJob({ j, left, right }: { j: Job; left?: React.ReactNode; right?: React.ReactNode }) {
   const router = useRouter();
-  return <article className="mini-job" onClick={() => router.push(jobPath(j))}>{left ?? <span className="grade"><b className={`g${j.grade || "N"}`}>{j.grade || "–"}</b></span>}<div><b><Link href={jobPath(j)} onClick={e => e.stopPropagation()} style={{ color: "inherit" }}>{j.org}</Link></b><span>{[j.job, j.pay, j.dist || j.area].filter(Boolean).join(" · ")}</span></div>{right ?? (j.reviews ? <span className="tag gr">후기 {j.score}</span> : <span className="cap">{daysLabel(j.days)}</span>)}</article>;
+  return <article className="mini-job" onClick={() => router.push(jobPath(j))}>{left ?? <span className="grade"><b className={`g${j.grade || "N"}`}>{j.grade || "–"}</b></span>}<div><b><Link prefetch={false} href={jobPath(j)} onClick={e => e.stopPropagation()} style={{ color: "inherit" }}>{j.org}</Link></b><span>{[j.job, j.pay, j.dist || j.area].filter(Boolean).join(" · ")}</span></div>{right ?? (j.reviews ? <span className="tag gr">후기 {j.score}</span> : <span className="cap">{daysLabel(j.days)}</span>)}</article>;
 }
 
 export function SaveButton({ job }: { job: Job }) {

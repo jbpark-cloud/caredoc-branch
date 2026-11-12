@@ -52,7 +52,7 @@ export default async function HomePage() {
       </form>
       <div className="hm-keys" aria-label="자주 찾는 조건">
         <span className="cap">자주 찾는 조건</span>
-        <Link href="/jobs?sched=오전만">오전만</Link><Link href="/jobs?sched=주3일">주 3일</Link><Link href="/jobs/자격무관">자격증 없어도</Link><Link href="/jobs?sched=야간">야간</Link><Link href="/jobs?sched=입주">입주</Link><Link href="/jobs?fac=주야간보호">주야간보호</Link><Link href="/jobs?fac=요양원">요양원</Link>
+        <Link prefetch={false} href="/jobs?sched=오전만">오전만</Link><Link prefetch={false} href="/jobs?sched=주3일">주 3일</Link><Link prefetch={false} href="/jobs/자격무관">자격증 없어도</Link><Link prefetch={false} href="/jobs?sched=야간">야간</Link><Link prefetch={false} href="/jobs?sched=입주">입주</Link><Link prefetch={false} href="/jobs?fac=주야간보호">주야간보호</Link><Link prefetch={false} href="/jobs?fac=요양원">요양원</Link>
       </div>
     </div></section>
 
@@ -64,25 +64,25 @@ export default async function HomePage() {
 
     {/* 3. 직종·지역 바로가기 */}
     <nav className="hm-tiles" aria-label="직종별 바로가기">
-      {TILES.map(([label, key, href]) => { const I = JobIco[key]; const n = count(key); return <Link key={key} href={href} className="hm-tile"><I /><b>{label}</b>{showStats && <span>{n}건</span>}</Link>; })}
+      {TILES.map(([label, key, href]) => { const I = JobIco[key]; const n = count(key); return <Link prefetch={false} key={key} href={href} className="hm-tile"><I /><b>{label}</b>{showStats && <span>{n}건</span>}</Link>; })}
     </nav>
     <nav className="hm-chips" aria-label="지역·근무시간 바로가기">
-      <div><span className="hm-chips-t">지역</span>{HUB_GU.map(g => <Link key={g} className="chip" href={`/jobs/${g}`}>{g}{showStats && guCount(g) > 0 && <small>{guCount(g)}</small>}</Link>)}<Link className="chip more" href="/jobs">전체 지역</Link></div>
-      <div><span className="hm-chips-t">근무시간</span>{SCHEDS.map(s => <Link key={s} className="chip" href={`/jobs?sched=${s}`}>{s}</Link>)}</div>
+      <div><span className="hm-chips-t">지역</span>{HUB_GU.map(g => <Link prefetch={false} key={g} className="chip" href={`/jobs/${g}`}>{g}{showStats && guCount(g) > 0 && <small>{guCount(g)}</small>}</Link>)}<Link prefetch={false} className="chip more" href="/jobs">전체 지역</Link></div>
+      <div><span className="hm-chips-t">근무시간</span>{SCHEDS.map(s => <Link prefetch={false} key={s} className="chip" href={`/jobs?sched=${s}`}>{s}</Link>)}</div>
     </nav>
 
     {/* 4. 프리미엄 채용관 */}
-    <div className="sec-t"><div><h2>프리미엄 채용관</h2><p className="muted small">{demo ? "광고 자리 예시입니다. 시범 운영 중이라 실제 시설의 광고가 아닙니다." : "상위노출 광고를 이용 중인 시설의 공고입니다."}</p></div><Link href="/biz/ads">광고 안내 →</Link></div>
+    <div className="sec-t"><div><h2>프리미엄 채용관</h2><p className="muted small">{demo ? "광고 자리 예시입니다. 시범 운영 중이라 실제 시설의 광고가 아닙니다." : "상위노출 광고를 이용 중인 시설의 공고입니다."}</p></div><Link prefetch={false} href="/biz/ads">광고 안내 →</Link></div>
     <div className={`pm-grid${premium.length ? "" : " solo"}`}>
       {premium.map(({ job: j, sample }) => (
-        <Link key={j.id} href={jobPath(j)} className="pm-card">
+        <Link prefetch={false} key={j.id} href={jobPath(j)} className="pm-card">
           <span className="pm-top"><LogoMark name={j.org} /><span className="pm-org"><b>{j.org}</b><small>{j.fac} · {j.area}</small></span>{sample && <em className="pm-sample">예시</em>}</span>
           <strong>{j.title}</strong>
           <span className="pm-meta">{[j.hours[0], j.sched].filter(Boolean).join(" · ")}</span>
           <span className="pm-foot"><b>{j.pay}</b><span>{j.urgent && <span className="tag rd">급구</span>}{j.noLic && <span className="tag gr">자격증 없어도</span>}{!j.urgent && !j.noLic && <span className="cap">{daysLabel(j.days)}</span>}</span></span>
         </Link>
       ))}
-      <Link href="/biz/ads" className="pm-card inq">
+      <Link prefetch={false} href="/biz/ads" className="pm-card inq">
         <span className="pm-inq-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg></span>
         <strong>이 자리에 우리 시설을 알리세요</strong>
         <span className="pm-meta">공고 등록은 무료 · 상위노출은 7일 단위로 신청</span>
@@ -91,38 +91,38 @@ export default async function HomePage() {
     </div>
 
     {jobs.length === 0 ? (
-      <div className="empty" style={{ marginTop: 32 }}><p style={{ fontSize: 20, color: "var(--title)" }}>곧 첫 공고가 올라옵니다</p><p>시설·병원의 공고를 받고 있습니다. 공고 등록은 무료입니다.</p><Link className="btn sec pill" style={{ marginTop: 12 }} href="/biz">시설·병원 공고 등록하기</Link></div>
+      <div className="empty" style={{ marginTop: 32 }}><p style={{ fontSize: 20, color: "var(--title)" }}>곧 첫 공고가 올라옵니다</p><p>시설·병원의 공고를 받고 있습니다. 공고 등록은 무료입니다.</p><Link prefetch={false} className="btn sec pill" style={{ marginTop: 12 }} href="/biz">시설·병원 공고 등록하기</Link></div>
     ) : <>
       {/* 5. 급구 */}
       {urgent.length > 0 && <>
-        <div className="sec-t"><div><h2>급하게 구하는 자리</h2><p className="muted small">바로 일할 분을 찾는 공고입니다</p></div><Link href="/jobs?sort=new">전체 보기 →</Link></div>
+        <div className="sec-t"><div><h2>급하게 구하는 자리</h2><p className="muted small">바로 일할 분을 찾는 공고입니다</p></div><Link prefetch={false} href="/jobs?sort=new">전체 보기 →</Link></div>
         <div className="feedgrid">{urgent.map(j => <FeedCard key={j.id} j={j} />)}</div>
       </>}
 
       {/* 6. 새 공고 */}
-      <div className="sec-t"><div><h2>새로 올라온 공고</h2><p className="muted small">최근 등록 순</p></div><Link href="/jobs?sort=new">전체 보기 →</Link></div>
+      <div className="sec-t"><div><h2>새로 올라온 공고</h2><p className="muted small">최근 등록 순</p></div><Link prefetch={false} href="/jobs?sort=new">전체 보기 →</Link></div>
       <ListTable jobs={fresh} />
-      <Link className="btn out wide" style={{ marginTop: 12 }} href="/jobs?sort=new">{showStats ? `전체 공고 ${jobs.length.toLocaleString()}건 보기` : "전체 공고 보기"}</Link>
+      <Link prefetch={false} className="btn out wide" style={{ marginTop: 12 }} href="/jobs?sort=new">{showStats ? `전체 공고 ${jobs.length.toLocaleString()}건 보기` : "전체 공고 보기"}</Link>
     </>}
 
     {/* 7. 교육 띠 배너 */}
-    <Link href="/start" className="hm-band edu">
+    <Link prefetch={false} href="/start" className="hm-band edu">
       <span className="hm-band-t"><span className="tag gr">자격증이 없어요</span><b>오늘 시작할 수 있는 일부터, 요양보호사가 되는 길까지</b><span>자격증 없이 가능한 일{showStats ? ` ${count("자격무관")}건` : ""} · 자격 취득 4단계 · 교육 상담 무료</span></span>
       <span className="btn out pill">시작하는 방법 보기</span>
     </Link>
 
     {/* 8. 가이드 */}
-    <div className="sec-t"><div><h2>돌봄 일자리 가이드</h2><p className="muted small">처음 시작하는 분들이 가장 많이 묻는 내용</p></div><Link href="/guide">전체 보기 →</Link></div>
-    <div className="grid g4">{GUIDES.map(g => <Link key={g.slug} href={`/guide/${g.slug}`} className="card stack hm-guide"><span className="tag or" style={{ alignSelf: "flex-start" }}>가이드</span><h3>{guideShort(g)}</h3><p className="muted small">{g.lead.slice(0, 58)}…</p></Link>)}</div>
+    <div className="sec-t"><div><h2>돌봄 일자리 가이드</h2><p className="muted small">처음 시작하는 분들이 가장 많이 묻는 내용</p></div><Link prefetch={false} href="/guide">전체 보기 →</Link></div>
+    <div className="grid g4">{GUIDES.map(g => <Link prefetch={false} key={g.slug} href={`/guide/${g.slug}`} className="card stack hm-guide"><span className="tag or" style={{ alignSelf: "flex-start" }}>가이드</span><h3>{guideShort(g)}</h3><p className="muted small">{g.lead.slice(0, 58)}…</p></Link>)}</div>
 
     {/* 9. 지역·직종 링크 */}
     <div className="sec-t"><div><h2>지역별 · 직종별 채용정보</h2></div></div>
-    <div className="card linkhub">{HUB_GU.map(g => <div key={g}><b>{g}</b>{HUB_JOBS.map(t => <Link key={t} href={`/jobs/${g}/${t}`}>{g} {t} 구인</Link>)}</div>)}</div>
+    <div className="card linkhub">{HUB_GU.map(g => <div key={g}><b>{g}</b>{HUB_JOBS.map(t => <Link prefetch={false} key={t} href={`/jobs/${g}/${t}`}>{g} {t} 구인</Link>)}</div>)}</div>
 
     {/* 10. 기업 띠 */}
     <div className="hm-band biz">
       <span className="hm-band-t"><span className="tag wh">시설·병원 담당자</span><b>공고 등록은 무료입니다</b><span>가입 1분 · 인증이 끝나면 동네 구직자에게 바로 보입니다</span></span>
-      <span className="row"><Link className="btn wh pill" href="/biz">무료로 공고 올리기</Link><Link className="btn ghost pill" href="/biz/ads">광고 상품 보기</Link></span>
+      <span className="row"><Link prefetch={false} className="btn wh pill" href="/biz">무료로 공고 올리기</Link><Link prefetch={false} className="btn ghost pill" href="/biz/ads">광고 상품 보기</Link></span>
     </div>
 
     <div className="sec-t"><h2>케어잡모아는 이렇게 다릅니다</h2></div>

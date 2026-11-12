@@ -43,7 +43,7 @@ export default function HeroCarousel({ slides }: { slides: Slide[] }) {
       onTouchStart={() => { busy.current = true; }} onTouchEnd={() => { setTimeout(() => { busy.current = false; }, 4000); }}>
       <div className="hc-track" ref={track}>
         {slides.map((s, i) => (
-          <Link key={s.key} href={s.href} className={`hc-slide ${s.tone}${s.img ? "" : " noimg"}`} aria-roledescription="slide" aria-label={`${n}장 중 ${i + 1}번째. ${s.sample ? "예시 광고. " : ""}${s.org ? s.org + " " : ""}${s.title}`}>
+          <Link prefetch={false} key={s.key} href={s.href} className={`hc-slide ${s.tone}${s.img ? "" : " noimg"}`} aria-roledescription="slide" aria-label={`${n}장 중 ${i + 1}번째. ${s.sample ? "예시 광고. " : ""}${s.org ? s.org + " " : ""}${s.title}`}>
             <span className="hc-text">
               <span className="hc-tag">{s.tag}{s.sample && <em>예시</em>}</span>
               {s.org && <span className="hc-org"><LogoMark name={s.org} size={30} />{s.org}</span>}
