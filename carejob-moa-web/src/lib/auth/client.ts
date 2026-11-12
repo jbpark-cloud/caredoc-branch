@@ -10,6 +10,8 @@ const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 let sb: SupabaseClient | null = null;
 export function supabase(): SupabaseClient | null { if (!URL || !KEY) return null; if (!sb) sb = createClient(URL, KEY, { auth: { persistSession: true, detectSessionInUrl: true } }); return sb; }
 export const authMode = (): "supabase" | "mock" => (URL && KEY ? "supabase" : "mock");
+/** 카카오 로그인 버튼 노출 여부. 실서비스에서는 Supabase 에 카카오 설정을 마친 뒤 NEXT_PUBLIC_KAKAO_LOGIN=1 로 켠다(미설정 상태에서 누르면 오류가 나므로 숨김) */
+export const kakaoEnabled = () => authMode() === "mock" || process.env.NEXT_PUBLIC_KAKAO_LOGIN === "1";
 
 export const normPhone = (p: string) => p.replace(/\D/g, "");
 const e164 = (p: string) => { const d = normPhone(p); return d.startsWith("0") ? "+82" + d.slice(1) : "+" + d; };

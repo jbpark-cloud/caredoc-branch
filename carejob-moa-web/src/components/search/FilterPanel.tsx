@@ -35,17 +35,18 @@ export function ListHeadControls({ filter }: { filter: SearchFilter }) {
   const go = (f: SearchFilter) => router.push(urlFromFilter(f));
   return <div className="row">
     <div className="seg"><button className={filter.view !== "card" ? "on" : ""} onClick={() => go({ ...filter, view: "list" })}>목록</button><button className={filter.view === "card" ? "on" : ""} onClick={() => go({ ...filter, view: "card" })}>카드</button></div>
-    <label className="small muted">정렬 <select aria-label="정렬" value={filter.sort} onChange={e => go({ ...filter, sort: e.target.value as SearchFilter["sort"] })}><option value="near">가까운 순</option><option value="new">최신 순</option><option value="grade">시설 등급 순</option></select></label>
+    <label className="small muted">정렬 <select aria-label="정렬" value={filter.sort} onChange={e => go({ ...filter, sort: e.target.value as SearchFilter["sort"] })}><option value="near">추천 순</option><option value="new">최신 순</option><option value="grade">시설 등급 순</option></select></label>
   </div>;
 }
 
 export function AlertButton({ label, filter }: { label: string; filter?: SearchFilter }) {
   const { requireUser, setAlert, demo } = useAuth(); const toast = useToast();
   const save = async () => {
-    if (authMode() === "supabase" && !demo) {
+    if (authMode() !== "supabase" || demo) { toast("시범 운영 중에는 알림 문자가 발송되지 않습니다"); return; }
+    try {
       const r = await authFetch("/api/alerts", { method: "POST", body: JSON.stringify({ gu: filter && filter.gu !== "전체" ? filter.gu : null, job: filter?.job.length === 1 ? filter.job[0] : null, sched: filter?.sched.length === 1 ? filter.sched[0] : null }) });
       const j = await r.json().catch(() => ({})); if (!j.ok) { toast(j.msg || "신청하지 못했습니다"); return; }
-    }
+    } catch { toast("인터넷 연결을 확인해 주세요"); return; }
     setAlert(label); toast("새 공고가 올라오면 매일 아침 문자로 알려드릴게요");
   };
   return <button className="btn pri pill" style={{ marginTop: 16 }} onClick={() => requireUser(save)}>이 조건 새 공고 문자 받기</button>;

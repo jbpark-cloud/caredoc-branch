@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db/server";
+import { db, safeEq } from "@/lib/db/server";
 import { sendSms, site } from "@/lib/sms";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ export const maxDuration = 60;
  */
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
-  if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) return NextResponse.json({ ok: false }, { status: 401 });
+  if (!secret || !safeEq(req.headers.get("authorization") || "", `Bearer ${secret}`)) return NextResponse.json({ ok: false }, { status: 401 });
   const c = db(); if (!c) return NextResponse.json({ ok: true, skipped: "demo" });
   const now = Date.now(), day = 864e5, iso = (ms: number) => new Date(ms).toISOString();
   const out = { reminded: 0, purgedApps: 0, purgedConsults: 0, alerts: 0 };
@@ -31,14 +31,15 @@ export async function GET(req: Request) {
   const { data: fresh } = await c.from("jobs").select("id,gu,job,sched,org,pay").eq("published", true).is("closed_at", null).gt("created_at", iso(now - day)).limit(500);
   if (fresh?.length) {
     const { data: alerts } = await c.from("alerts").select("id,phone,gu,job,sched,last_sent_at").eq("active", true).limit(2000);
-    for (const al of alerts || []) {
-      if (al.last_sent_at && now - new Date(al.last_sent_at).getTime() < 20 * 3600e3) continue;
+    const due = (alerts || []).filter(al => !(al.last_sent_at && now - new Date(al.last_sent_at).getTime() < 20 * 3600e3));
+    const sendOne = async (al: (typeof due)[number]) => {
       const hit = fresh.filter(j => (!al.gu || j.gu === al.gu) && (!al.job || j.job === al.job) && (!al.sched || j.sched === al.sched));
-      if (!hit.length) continue;
+      if (!hit.length) return;
       const path = "/jobs" + (al.gu ? "/" + al.gu : "") + (al.job ? "/" + al.job : "");
-      await sendSms(al.phone, `[케어잡모아] ${al.gu || "서울"} ${al.job || "돌봄"} 새 공고 ${hit.length}건 (${hit[0].org} ${hit[0].pay} 등). 보기: ${site(path)} · 알림 끄기는 내 정보에서`);
-      await c.from("alerts").update({ last_sent_at: iso(now) }).eq("id", al.id); out.alerts++;
-    }
+      const r = await sendSms(al.phone, `[케어잡모아] ${al.gu || "서울"} ${al.job || "돌봄"} 새 공고 ${hit.length}건 (${hit[0].org} ${hit[0].pay} 등). 보기: ${site(path)} · 알림 끄기는 내 정보에서`);
+      if (r.ok) { await c.from("alerts").update({ last_sent_at: iso(now) }).eq("id", al.id); out.alerts++; }
+    };
+    for (let i = 0; i < due.length && Date.now() - now < 45_000; i += 20) await Promise.all(due.slice(i, i + 20).map(sendOne));
   }
   return NextResponse.json({ ok: true, ...out });
 }

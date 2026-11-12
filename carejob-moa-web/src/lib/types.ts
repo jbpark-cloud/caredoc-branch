@@ -35,6 +35,7 @@ export interface Job {
   head: number;
   rv: Review[];
   contact?: string;
+  closed?: boolean; // 마감(지원 불가)
 }
 
 export interface Facility {

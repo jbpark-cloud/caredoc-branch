@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Modal, Steps, Check, useAuth, useToast } from "../providers";
 import { LIC_OPTIONS } from "@/lib/constants";
-import { sendOtp, verifyOtp, kakaoLogin, normPhone, authFetch, authMode } from "@/lib/auth/client";
+import { sendOtp, verifyOtp, kakaoLogin, normPhone, authFetch, authMode, kakaoEnabled } from "@/lib/auth/client";
 import type { Job } from "@/lib/types";
 import { jobPath } from "@/lib/seo";
 
@@ -32,13 +32,18 @@ export default function ApplyModal({ job: j }: { job: Job }) {
 
   const submit = async () => {
     setBusy(true);
-    let res: { ok?: boolean; demo?: boolean; dup?: boolean; msg?: string } = {};
+    let res: { ok?: boolean; demo?: boolean; dup?: boolean; msg?: string; needAuth?: boolean } = {};
     try {
       const r = await authFetch("/api/apply", { method: "POST", body: JSON.stringify({ jobId: j.id, name, phone: normPhone(phone), proxyPhone: proxy ? normPhone(cphone) : null, lic: realLic(), openToOffers: openOffers, consent: true }) });
       res = await r.json();
     } catch { res = { ok: false, msg: "인터넷 연결을 확인해 주세요" }; }
     setBusy(false);
-    if (!res.ok) { toast(res.msg || "지원하지 못했습니다. 잠시 후 다시 시도해 주세요"); return; }
+    if (!res.ok) {
+      toast(res.msg || "지원하지 못했습니다. 잠시 후 다시 시도해 주세요");
+      // 로그인이 풀렸거나 다른 번호로 인증된 경우: 문자 인증부터 다시
+      if (res.needAuth) { setUser(null); setOk(false); setCode(""); setStep(1); }
+      return;
+    }
     setResult(res.demo ? "demo" : res.dup ? "dup" : "sent");
     if (!user) setJoined(true);
     setUser({ name, phone: normPhone(phone), lic: realLic(), caredoc: user?.caredoc ?? false, open: openOffers });
@@ -58,7 +63,7 @@ export default function ApplyModal({ job: j }: { job: Job }) {
 
   let body: React.ReactNode;
   if (step === 1) body = <>
-    <h2>이름과 전화번호를 알려주세요</h2><p className="muted">시설에서 이 번호로 연락드립니다.</p><Steps n={1} of={3} />
+    <h2>이름과 전화번호를 알려주세요</h2><p className="muted">{demo ? "시범 운영 중인 예시 공고입니다. 지원 화면만 체험해 보실 수 있어요." : "시설에서 이 번호로 연락드립니다."}</p><Steps n={1} of={3} />
     {already && <p className="cap" style={{ color: "var(--primary)", marginBottom: 8 }}>이미 지원한 공고입니다. 다시 보내도 중복으로 접수되지 않아요.</p>}
     <div className="stack big" style={{ gap: 14 }}>
       <div className="field"><label htmlFor="a-name">이름</label><input id="a-name" placeholder="홍길동" autoComplete="name" value={name} onChange={e => setName(e.target.value)} autoFocus /></div>
@@ -71,7 +76,7 @@ export default function ApplyModal({ job: j }: { job: Job }) {
     <button className="btn pri pill wide" style={{ marginTop: 12, height: 56, fontSize: 18 }} disabled={busy} onClick={next1}>다음</button></>;
   else if (step === 2) body = <>
     <h2>본인 확인</h2><p className="muted">{phone}로 보낸 숫자 6자리를 넣어 주세요.</p><Steps n={2} of={3} />
-    <div className="cert"><button className={via === "sms" ? "on" : ""} onClick={() => setVia("sms")}>문자 인증</button><button className={via === "kakao" ? "on" : ""} onClick={() => setVia("kakao")}>카카오로 인증</button></div>
+    {kakaoEnabled() && <div className="cert"><button className={via === "sms" ? "on" : ""} aria-pressed={via === "sms"} onClick={() => setVia("sms")}>문자 인증</button><button className={via === "kakao" ? "on" : ""} aria-pressed={via === "kakao"} onClick={() => setVia("kakao")}>카카오로 인증</button></div>}
     {via === "kakao" ? <div className="card" style={{ marginTop: 16, background: "var(--bg)" }}>
       <p>카카오 로그인으로 본인 확인을 대신합니다.</p>
       <p className="muted small">{authMode() === "supabase" ? "카카오 화면으로 이동했다가 이 공고로 돌아옵니다. 돌아오면 '간편 지원하기'를 한 번 더 눌러 주세요." : "시범 운영 중에는 버튼만 누르면 확인됩니다."}</p>
@@ -90,7 +95,7 @@ export default function ApplyModal({ job: j }: { job: Job }) {
       : result === "dup" ? <><h2>이미 지원한 공고예요</h2><p className="muted" style={{ marginTop: 8 }}><b>{j.org}</b>에 지원이 접수되어 있습니다. 시설 연락을 기다려 주세요.</p></>
       : <><h2>지원이 끝났습니다</h2><p className="muted" style={{ marginTop: 8 }}><b>{j.org}</b>에서 <b>{proxy && cphone ? cphone : phone}</b>로 보통 1~2일 안에 연락드립니다.</p></>}
     {joined && !demo && <div className="card" style={{ textAlign: "left", marginTop: 16, background: "var(--green-bg)", borderColor: "transparent" }}><b>회원가입도 함께 끝났습니다</b><p className="small">다음부터는 전화번호만 누르면 바로 지원돼요. 상단 이름을 누르면 내 지원 내역을 볼 수 있습니다.</p></div>}
-    <Check on={openOffers} style={{ marginTop: 16, textAlign: "left" }} onClick={async () => { const v = !openOffers; setOpenOffers(v); patchUser({ open: v }); if (authMode() === "supabase") { try { await authFetch("/api/seeker", { method: "POST", body: JSON.stringify({ open: v }) }); } catch {} } }}>다른 시설에서도 연락받을게요 (선택)<br /><span className="cap">이름은 성만 남기고(김OO) 지역·자격·희망 직종만 인증된 시설에 보입니다. 연락처는 내가 수락해야 공개.</span></Check>
+    <Check on={openOffers} style={{ marginTop: 16, textAlign: "left" }} onClick={async () => { const v = !openOffers; setOpenOffers(v); patchUser({ open: v }); if (authMode() === "supabase" && !demo) { let saved = false; try { const r = await authFetch("/api/seeker", { method: "POST", body: JSON.stringify({ open: v }) }); const jj = await r.json().catch(() => ({})); saved = !!jj.ok; if (!saved && jj.msg) toast(jj.msg); } catch {} if (!saved) { setOpenOffers(!v); patchUser({ open: !v }); } } }}>다른 시설에서도 연락받을게요 (선택)<br /><span className="cap">이름은 성만 남기고(김OO) 지역·자격·희망 직종만 인증된 시설에 보입니다. 연락처는 내가 수락해야 공개.</span></Check>
     <div className="two" style={{ marginTop: 20 }}><button className="btn out" onClick={close}>닫기</button><Link className="btn pri pill" href={`/jobs/${j.gu}/${j.job}`} onClick={close}>비슷한 공고 더 보기</Link></div>
   </div>;
 

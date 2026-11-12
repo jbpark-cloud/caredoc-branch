@@ -3,21 +3,21 @@ import { useEffect, useRef, useState } from "react";
 import { authFetch, authMode } from "@/lib/auth/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../providers";
+import { useAuth, useToast } from "../providers";
 import { BizVerifyBanner } from "./BizShared";
 import { BIZ_STATUS_LABEL } from "@/lib/constants";
 
 export default function BizMe() {
   const { biz, ready, open, logout, demo } = useAuth(); const router = useRouter(); const leaving = useRef(false);
-  const [confirmDel, setConfirmDel] = useState(false);
+  const [confirmDel, setConfirmDel] = useState(false); const toast = useToast();
   useEffect(() => { if (ready && !biz && !leaving.current) open({ type: "login", kind: "biz", then: () => {} }); }, [ready, biz, open]);
   if (!ready) return null;
   if (!biz) return <div style={{ paddingBlock: 48 }} className="stack"><h1>기업회원 정보</h1><p className="muted">로그인하면 시설 정보와 이용 중인 상품을 볼 수 있습니다.</p><button className="btn sec pill" style={{ alignSelf: "flex-start" }} onClick={() => open({ type: "login", kind: "biz" })}>로그인</button></div>;
   return <>
     <div style={{ paddingBlock: 24 }} className="stack"><h1>기업회원 정보</h1></div><BizVerifyBanner />
     <div className="grid g2" style={{ marginTop: 16 }}><div className="card stack"><h3>{biz.org}</h3><dl className="kv"><dt>시설 유형</dt><dd>{biz.fac}</dd><dt>담당자</dt><dd>{biz.name}</dd><dt>아이디</dt><dd>{biz.email === "kakao" ? "카카오 연동" : biz.email}</dd><dt>인증</dt><dd>{biz.status === "verified" ? "인증 완료 · 공단 평가등급 연결" : BIZ_STATUS_LABEL[biz.status]}</dd></dl></div>
-    <div className="card stack"><h3>이용 중인 상품</h3><p className="muted small">상위노출 7일 (요양보호사 · 오전) · 잔여 4일</p><p className="muted small">인재 제안 잔여 0건</p><Link className="btn out sm" style={{ alignSelf: "flex-start" }} href="/biz/ads">광고 상품 보기</Link><div className="hr" /><button className="btn out sm" style={{ alignSelf: "flex-start" }} onClick={async () => { leaving.current = true; await logout(); router.push("/biz"); }}>로그아웃</button>
+    <div className="card stack"><h3>이용 중인 상품 {demo && <span className="tag gy" style={{ verticalAlign: "middle" }}>예시</span>}</h3>{demo ? <><p className="muted small">상위노출 7일 (요양보호사 · 오전) · 잔여 4일</p><p className="muted small">인재 제안 잔여 0건</p></> : <p className="muted small">신청하신 광고 상품은 담당자 확인 후 적용되며, 적용 상태는 기업 홈의 공고 목록에 표시됩니다.</p>}<Link className="btn out sm" style={{ alignSelf: "flex-start" }} href="/biz/ads">광고 상품 보기</Link><div className="hr" /><button className="btn out sm" style={{ alignSelf: "flex-start" }} onClick={async () => { leaving.current = true; await logout(); router.push("/biz"); }}>로그아웃</button>
       {!confirmDel ? <button className="lnk" style={{ margin: 0, color: "var(--sub)", alignSelf: "flex-start" }} onClick={() => setConfirmDel(true)}>기업회원 탈퇴</button>
-        : <div className="vbanner none"><div><b>탈퇴하면 공고가 모두 내려갑니다</b><p>시설 정보·공고가 삭제됩니다. 진행 중인 유료 상품은 고객센터로 환불을 요청해 주세요.</p></div><div className="row"><button className="btn out sm" onClick={() => setConfirmDel(false)}>취소</button><button className="btn sm" style={{ background: "var(--red)", color: "#fff" }} onClick={async () => { leaving.current = true; if (authMode() === "supabase" && !demo) { const r = await authFetch("/api/me/delete", { method: "POST" }); if (!r.ok) { leaving.current = false; return; } } await logout(); router.push("/biz"); }}>탈퇴하기</button></div></div>}</div></div>
+        : <div className="vbanner none"><div><b>탈퇴하면 공고가 모두 내려갑니다</b><p>시설 정보·공고가 삭제됩니다. 진행 중인 유료 상품은 고객센터로 환불을 요청해 주세요.</p></div><div className="row"><button className="btn out sm" onClick={() => setConfirmDel(false)}>취소</button><button className="btn sm" style={{ background: "var(--red)", color: "#fff" }} onClick={async () => { leaving.current = true; if (authMode() === "supabase" && !demo) { const r = await authFetch("/api/me/delete", { method: "POST" }); const j = await r.json().catch(() => ({})); if (!j.ok) { leaving.current = false; toast(j.msg || "탈퇴 처리 중 문제가 생겼습니다. 잠시 후 다시 시도해 주세요"); return; } } await logout(); router.push("/biz"); }}>탈퇴하기</button></div></div>}</div></div>
   </>;
 }

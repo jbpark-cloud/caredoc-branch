@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { db, userFromRequest } from "@/lib/db/server";
+import { db, userFromRequest, cleanLine, cleanName } from "@/lib/db/server";
+import { FACS } from "@/lib/constants";
 import { bizOf, seekerOf, seekerFromRow, bizFromRow, phoneOfUser } from "@/lib/db/mappers";
 
 export const dynamic = "force-dynamic";
@@ -18,10 +19,13 @@ export async function GET(req: Request) {
   }
   let b = await bizOf(user);
   if (!b && meta.role === "biz" && meta.org) {
-    const { data } = await c.from("businesses").insert({ owner_id: user.id, org: meta.org, fac: meta.fac || "방문요양", manager_name: meta.manager_name || "담당자", manager_phone: meta.manager_phone || "", email: user.email, status: "none" }).select("*").single();
+    // user_metadata 는 가입자가 직접 넣는 값이다 → 길이·형식을 정리해서 저장
+    const org = cleanLine(meta.org, 60);
+    const fac = (FACS as readonly string[]).includes(meta.fac) ? meta.fac : "방문요양";
+    const { data } = org ? await c.from("businesses").insert({ owner_id: user.id, org, fac, manager_name: cleanName(meta.manager_name, 30) || "담당자", manager_phone: String(meta.manager_phone || "").replace(/\D/g, "").slice(0, 11), email: user.email, status: "none" }).select("*").single() : { data: null };
     b = data;
   }
-  const kakaoName = (meta.name || meta.full_name || meta.nickname) as string | undefined;
+  const kakaoName = cleanName(meta.name || meta.full_name || meta.nickname) || undefined;
   return NextResponse.json({
     seeker: s ? seekerFromRow(s) : (meta.role !== "biz" && user.app_metadata?.provider === "kakao" ? { name: kakaoName || "회원", phone: "", lic: [], caredoc: false, open: false } : null),
     biz: b ? bizFromRow(b) : null,

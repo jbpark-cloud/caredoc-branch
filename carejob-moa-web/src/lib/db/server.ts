@@ -1,5 +1,6 @@
 // 서버 전용 DB 접근. SUPABASE_SERVICE_ROLE_KEY 가 있으면 Supabase, 없으면 시범(데모) 모드.
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
+import { createHash, timingSafeEqual } from "node:crypto";
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -46,6 +47,22 @@ export function isAdminEmail(email?: string | null) {
   const list = (process.env.ADMIN_EMAILS || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
   return !!email && list.includes(email.toLowerCase());
 }
+/** 운영자: ADMIN_EMAILS 에 있고 '이메일 확인이 끝난' 계정만. (이메일 확인을 끈 환경에서 남의 주소로 가입해 운영자가 되는 것을 막는다) */
+export function isAdminUser(u?: User | null) {
+  return !!u && !!u.email_confirmed_at && isAdminEmail(u.email);
+}
+
+/** 비밀값 비교는 길이·내용 모두 상수 시간으로 */
+export function safeEq(a: string, b: string) {
+  const x = createHash("sha256").update(a).digest(), y = createHash("sha256").update(b).digest();
+  return timingSafeEqual(x, y);
+}
+
+/** 사람 이름: 글자와 공백만 남긴다(점·슬래시·숫자 제거) → 문자 본문에 링크로 읽힐 글자를 끼워 넣지 못하게 */
+export const cleanName = (v: unknown, max = 20) => String(v ?? "").replace(/[^\p{L}\p{M} ]/gu, "").replace(/\s+/g, " ").trim().slice(0, max);
+/** 시설명 등 한 줄 텍스트: 제어문자·꺾쇠 제거 */
+export const cleanLine = (v: unknown, max: number) => String(v ?? "").replace(/[\u0000-\u001f\u007f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
+export const isUuid = (v: unknown): v is string => typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 
 /** 아주 단순한 인스턴스 메모리 레이트리밋 (MVP). 키당 windowMs 동안 max 회 */
 const hits = new Map<string, number[]>();

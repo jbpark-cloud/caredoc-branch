@@ -78,7 +78,7 @@ export function Providers({ children, demo }: { children: ReactNode; demo: boole
   }, [refreshSession]);
   useEffect(() => { if (ready) { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch {} } }, [st, ready]);
 
-  const toast = useCallback((msg: string) => { const id = ++seq.current; setToasts(t => [...t, { id, msg }]); setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 2400); }, []);
+  const toast = useCallback((msg: string) => { const id = ++seq.current; setToasts(t => [...t, { id, msg }]); setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 4000); }, []);
   const open = useCallback((m: ModalSpec) => setModal(m), []);
   const close = useCallback(() => setModal(null), []);
 
@@ -100,7 +100,7 @@ export function Providers({ children, demo }: { children: ReactNode; demo: boole
     <ToastCtx.Provider value={toast}>
       <AuthCtx.Provider value={ctx}>
         {children}
-        <div aria-live="polite">{toasts.map((t, i) => <div key={t.id} className="toast" style={{ bottom: 24 + i * 52 }}>{t.msg}</div>)}</div>
+        <div aria-live="polite" role="status" className="toasts">{toasts.slice(-3).map(t => <div key={t.id} className="toast">{t.msg}</div>)}</div>
       </AuthCtx.Provider>
     </ToastCtx.Provider>
   );
@@ -108,10 +108,33 @@ export function Providers({ children, demo }: { children: ReactNode; demo: boole
 
 /** 공통 모달 껍데기 */
 export function Modal({ children, wide, onClose }: { children: ReactNode; wide?: boolean; onClose: () => void }) {
-  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); }; window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, [onClose]);
+  const ref = useRef<HTMLDivElement>(null);
+  // 열릴 때: 배경 스크롤 잠금 + 초점을 창 안으로. 닫힐 때: 원래 누른 버튼으로 초점 복귀. Tab 은 창 안에서만 돈다
+  useEffect(() => {
+    const prev = document.activeElement as HTMLElement | null;
+    const box = ref.current;
+    const k = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { onClose(); return; }
+      if (e.key !== "Tab" || !box) return;
+      const f = [...box.querySelectorAll<HTMLElement>('a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])')].filter(el => el.offsetParent !== null);
+      if (!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
+    window.addEventListener("keydown", k);
+    const overflow = document.body.style.overflow; document.body.style.overflow = "hidden";
+    if (box && !box.contains(document.activeElement)) box.focus();
+    return () => { window.removeEventListener("keydown", k); document.body.style.overflow = overflow; try { prev?.focus?.(); } catch {} };
+  }, [onClose]);
+  // 단계가 바뀔 때마다 제목을 창 이름으로 연결
+  useEffect(() => { const box = ref.current; const h = box?.querySelector("h2"); if (box && h) { if (!h.id) h.id = "md-title"; box.setAttribute("aria-labelledby", h.id); } });
   return (
-    <div className="ov" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="md" role="dialog" aria-modal="true" style={wide ? { maxWidth: 600 } : undefined}>{children}</div>
+    <div className="ov" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="md" ref={ref} role="dialog" aria-modal="true" tabIndex={-1} style={wide ? { maxWidth: 600 } : undefined}>
+        <button type="button" className="md-x" aria-label="닫기" onClick={onClose}><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg></button>
+        {children}
+      </div>
     </div>
   );
 }

@@ -12,7 +12,7 @@ export { isDemo };
 interface JobRow {
   id: number; org: string; fac: string; job: string; sched: string; title: string | null; hours: string | null; addr: string | null; gu: string | null; dong: string | null;
   pay: string | null; contact: string | null; ins: boolean | null; pay_open: boolean | null; no_lic: boolean | null; urgent: boolean | null; top: boolean | null; caredoc: boolean | null;
-  description: string | null; head: number | null; benefits: string[] | null; created_at: string; businesses?: { grade: string | null } | null;
+  description: string | null; head: number | null; benefits: string[] | null; created_at: string; closed_at?: string | null; businesses?: { grade: string | null } | null;
 }
 
 const SCHEDS = new Set(["오전만", "주간", "주3일", "야간", "입주", "단기"]);
@@ -35,11 +35,11 @@ export function rowToJob(r: JobRow): Job {
     score: 0, reviews: 0, noLic: r.no_lic ?? NOLIC_JOBS.has(r.job), urgent: !!r.urgent, caredoc: !!r.caredoc, org: r.org, dist: "",
     days: Math.max(0, Math.floor((Date.now() - new Date(r.created_at).getTime()) / 864e5)), top: !!r.top,
     title: r.title || `${r.job} 모집${hp[0] ? " · " + hp[0] : ""}`, benef, duty: desc.length ? desc.slice(0, 8) : (DUTY[r.job] || []), req: REQ[r.job] || "",
-    head: r.head || 1, rv: [], contact: r.contact || undefined,
+    head: r.head || 1, rv: [], contact: r.contact || undefined, closed: !!r.closed_at,
   };
 }
 
-const JOB_COLS = "id,org,fac,job,sched,title,hours,addr,gu,dong,pay,contact,ins,pay_open,no_lic,urgent,top,caredoc,description,head,benefits,created_at,businesses(grade)";
+const JOB_COLS = "id,org,fac,job,sched,title,hours,addr,gu,dong,pay,contact,ins,pay_open,no_lic,urgent,top,caredoc,description,head,benefits,created_at,closed_at,businesses(grade)";
 
 export async function getJobs(): Promise<Job[]> {
   const c = db();

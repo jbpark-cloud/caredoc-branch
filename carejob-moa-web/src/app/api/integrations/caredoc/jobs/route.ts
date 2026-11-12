@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
-import crypto from "node:crypto";
-import { db } from "@/lib/db/server";
+import { db, safeEq } from "@/lib/db/server";
 import { normalizeJob } from "@/lib/jobs/normalize";
 
 /**
@@ -13,7 +12,7 @@ import { normalizeJob } from "@/lib/jobs/normalize";
 function authed(req: Request) {
   const secret = process.env.CAREDOC_SYNC_SECRET || ""; const h = req.headers.get("authorization") || "";
   const got = h.startsWith("Bearer ") ? h.slice(7) : "";
-  return !!secret && got.length === secret.length && crypto.timingSafeEqual(Buffer.from(got), Buffer.from(secret));
+  return !!secret && !!got && safeEq(got, secret);
 }
 
 export async function POST(req: Request) {

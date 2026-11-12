@@ -27,7 +27,7 @@ export default async function GuidePage({ params }: Props) {
       <article className="card guide"><span className="tag or">돌봄 일자리 가이드</span><h1 style={{ marginTop: 10, fontSize: 30 }}>{g.title}</h1><p className="lead">{g.lead}</p>
         {g.sections.map((s, i) => <section key={i}><h2 id={`s${i}`}>{s[0]}</h2><p>{s[1]}</p></section>)}
         <div className="two" style={{ marginTop: 24 }}><Link className="btn out" href={g.cta2.href}>{g.cta2.t}</Link><Link className="btn pri pill" href={g.cta.href}>{g.cta.t}</Link></div>
-        <p className="cap" style={{ marginTop: 16 }}>검색 키워드: {g.kw}</p></article>
+        <p className="cap" style={{ marginTop: 16 }}>2026년 11월 기준으로 확인한 내용입니다. 제도는 바뀔 수 있으니 신청 전 해당 기관 안내를 확인하세요.</p></article>
       <aside className="stack" style={{ gap: 16 }}>
         <div className="card stack"><h3>목차</h3>{g.sections.map((s, i) => <a key={i} href={`#s${i}`} className="lnk" style={{ margin: 0, fontSize: 15 }}>{i + 1}. {s[0]}</a>)}</div>
         <div className="card stack"><h3>다른 가이드</h3>{GUIDES.filter(x => x.slug !== g.slug).map(x => <Link key={x.slug} href={`/guide/${x.slug}`} className="lnk" style={{ margin: 0, fontSize: 15 }}>{guideShort(x)} →</Link>)}</div>

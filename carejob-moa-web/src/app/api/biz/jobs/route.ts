@@ -1,6 +1,6 @@
 import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
-import { db, userFromRequest } from "@/lib/db/server";
+import { db, userFromRequest, rateLimit } from "@/lib/db/server";
 import { bizOf } from "@/lib/db/mappers";
 
 export const dynamic = "force-dynamic";
@@ -20,10 +20,11 @@ export async function GET(req: Request) {
 
 /** 공고 마감/재개 */
 export async function PATCH(req: Request) {
+  if (!rateLimit(req, "bizjobs", 30)) return NextResponse.json({ ok: false }, { status: 429 });
   const user = await userFromRequest(req);
   if (!user) return NextResponse.json({ ok: false }, { status: 401 });
   const b = await bizOf(user); const body = await req.json().catch(() => ({}));
-  if (!b || !(body.id > 0)) return NextResponse.json({ ok: false }, { status: 400 });
+  if (!b || !Number.isInteger(body.id) || body.id <= 0) return NextResponse.json({ ok: false }, { status: 400 });
   const { error } = await db()!.from("jobs").update({ closed_at: body.close ? new Date().toISOString() : null }).eq("id", body.id).eq("business_id", b.id);
   revalidateTag("jobs");
   return NextResponse.json({ ok: !error });

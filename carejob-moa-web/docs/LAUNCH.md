@@ -26,12 +26,15 @@
 
 ## 3. 카카오 로그인(선택)
 developers.kakao.com → 앱 생성 → 카카오 로그인 활성화 → Redirect URI 에 Supabase 콜백(`https://{프로젝트}.supabase.co/auth/v1/callback`) → REST API 키·Client Secret 을 Supabase Providers → Kakao 에 입력
+→ 마지막으로 Vercel 환경변수 `NEXT_PUBLIC_KAKAO_LOGIN=1` 추가 후 재배포(이 값이 없으면 카카오 버튼은 숨겨집니다)
 
 ## 4. 도메인
 Vercel 프로젝트 → Domains 에 추가 → `NEXT_PUBLIC_SITE_URL`=도메인, `NEXT_PUBLIC_INDEXABLE=1` → Redeploy
 
 ## 환경변수 입력 후
-Vercel → Deployments → 최신 배포 ⋯ → **Redeploy**. 그다음 `/admin` 에서 운영자 이메일로 로그인(먼저 기업 가입 화면 등에서 같은 이메일로 계정을 만들어 두거나 Supabase Authentication → Add user).
+Vercel → Deployments → 최신 배포 ⋯ → **Redeploy**. 그다음 `/admin` 에서 운영자 이메일로 로그인.
+
+> **운영자 계정은 반드시 먼저 만들어 두세요.** Supabase Authentication → Users → Add user 에서 `ADMIN_EMAILS` 의 주소로 계정을 만들고 **Auto Confirm User** 를 켭니다. 이메일 확인이 끝난 계정만 운영자로 인정됩니다. 운영자 계정을 만들기 전에는 Supabase 의 "Confirm email" 을 끄지 마세요(끄면 누구나 그 주소로 가입을 시도할 수 있습니다).
 
 ## 이미 해 둔 것
 - 사업자 표시(대표·사업자번호·주소·전화·이메일·개인정보 보호책임자) — caredoc.kr 공시 정보 기준

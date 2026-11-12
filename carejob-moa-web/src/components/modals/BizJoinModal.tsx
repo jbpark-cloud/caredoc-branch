@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Modal, Steps, Check, useAuth, useToast } from "../providers";
 import { Ico } from "../ui";
 import { FACS } from "@/lib/constants";
-import { bizSignUp, bizKakao, authFetch, authMode, supabase } from "@/lib/auth/client";
+import { bizSignUp, bizKakao, authFetch, authMode, supabase, kakaoEnabled } from "@/lib/auth/client";
 import type { BizUser } from "@/lib/types";
 
 export default function BizJoinModal({ then, step: initStep }: { then?: () => void; step?: 1 | 2 }) {
@@ -59,23 +59,23 @@ export default function BizJoinModal({ then, step: initStep }: { then?: () => vo
     {step === 1 ? <>
       <span className="tag sec">기업회원 가입 · 1분</span><h2 style={{ marginTop: 8 }}>시설 정보와 담당자</h2><p className="muted">공고 등록은 가입 즉시 가능합니다. 인증은 다음 단계에서.</p><Steps n={1} of={2} />
       <div className="form" style={{ gap: 12 }}>
-        <div className="field full"><label>시설·병원 이름</label><input placeholder="예: 해피케어 방문요양센터" value={f.org} onChange={set("org")} autoFocus /></div>
-        <div className="field"><label>시설 유형</label><select value={f.fac} onChange={set("fac")}>{FACS.map(x => <option key={x}>{x}</option>)}</select></div>
-        <div className="field"><label>담당자 이름</label><input placeholder="홍길동" autoComplete="name" value={f.name} onChange={set("name")} /></div>
-        <div className="field"><label>담당자 휴대전화</label><input inputMode="numeric" autoComplete="tel" placeholder="010-0000-0000" value={f.phone} onChange={set("phone")} /></div>
-        {!loggedInNoBiz && <><div className="field"><label>이메일 (아이디)</label><input type="email" autoComplete="email" placeholder="manager@facility.kr" value={f.email} onChange={set("email")} /></div>
-        <div className="field full"><label>비밀번호</label><input type="password" autoComplete="new-password" placeholder="8자 이상" value={f.pw} onChange={set("pw")} /></div></>}
+        <div className="field full"><label htmlFor="bj-org">시설·병원 이름</label><input id="bj-org" placeholder="예: 해피케어 방문요양센터" value={f.org} onChange={set("org")} autoFocus /></div>
+        <div className="field"><label htmlFor="bj-fac">시설 유형</label><select id="bj-fac" value={f.fac} onChange={set("fac")}>{FACS.map(x => <option key={x}>{x}</option>)}</select></div>
+        <div className="field"><label htmlFor="bj-name">담당자 이름</label><input id="bj-name" placeholder="홍길동" autoComplete="name" value={f.name} onChange={set("name")} /></div>
+        <div className="field"><label htmlFor="bj-phone">담당자 휴대전화</label><input id="bj-phone" inputMode="numeric" autoComplete="tel" placeholder="010-0000-0000" value={f.phone} onChange={set("phone")} /></div>
+        {!loggedInNoBiz && <><div className="field"><label htmlFor="bj-email">이메일 (아이디)</label><input id="bj-email" type="email" autoComplete="email" placeholder="manager@facility.kr" value={f.email} onChange={set("email")} /></div>
+        <div className="field full"><label htmlFor="bj-pw">비밀번호</label><input id="bj-pw" type="password" autoComplete="new-password" placeholder="8자 이상" value={f.pw} onChange={set("pw")} /></div></>}
         <div className="full"><Check on={agree} onClick={() => setAgree(a => !a)}><b>[필수]</b> <Link href="/terms" target="_blank" style={{ color: "var(--info)" }} onClick={e => e.stopPropagation()}>이용약관</Link>·<Link href="/privacy" target="_blank" style={{ color: "var(--info)" }} onClick={e => e.stopPropagation()}>개인정보처리방침</Link>에 동의합니다<br /><span className="cap">지원자 개인정보는 채용 목적으로만 쓰고, 채용 종료 후 지체 없이 파기합니다.</span></Check></div>
       </div>
       <button className="btn sec pill wide" style={{ marginTop: 16 }} disabled={busy} onClick={submit1}>{busy ? "처리 중…" : "가입하고 인증 단계로"}</button>
-      {!loggedInNoBiz && <><div className="or"><span>또는</span></div>
-      <button className="btn kakao wide" disabled={busy} onClick={async () => { if (real) { const r = await bizKakao(); if (!r.ok) toast(r.msg || "카카오 로그인 실패"); return; } if (!agree) { toast("이용약관·개인정보처리방침에 동의해 주세요"); return; } doneJoin({ org: f.org || "우리요양원", fac: f.fac, email: "kakao", status: "none", name: f.name || "김담당", phone: f.phone }); }}><Ico.kakao />카카오로 빠르게 가입</button>
+      {!loggedInNoBiz && <>{kakaoEnabled() && <><div className="or"><span>또는</span></div>
+      <button className="btn kakao wide" disabled={busy} onClick={async () => { if (real) { const r = await bizKakao(); if (!r.ok) toast(r.msg || "카카오 로그인 실패"); return; } if (!agree) { toast("이용약관·개인정보처리방침에 동의해 주세요"); return; } doneJoin({ org: f.org || "우리요양원", fac: f.fac, email: "kakao", status: "none", name: f.name || "김담당", phone: f.phone }); }}><Ico.kakao />카카오로 빠르게 가입</button></>}
       <p className="cap" style={{ marginTop: 12 }}>가입 즉시 공고 작성이 가능하고, 인증이 끝나면 구직자에게 노출됩니다. 이미 회원이면 <a href="#" style={{ color: "var(--info)" }} onClick={e => { e.preventDefault(); open({ type: "login", kind: "biz", then }); }}>로그인</a></p></>}
     </> : step === 2 ? <>
       <span className="tag sec">{initStep === 2 ? "시설 인증" : "가입 완료"}</span><h2 style={{ marginTop: 8 }}>시설 인증</h2><p className="muted">둘 중 하나만 입력하세요. 운영팀이 24시간 안에 확인합니다. 지금 건너뛰어도 됩니다.</p><Steps n={2} of={2} />
       <div className="cert" style={{ marginTop: 8 }}><button className={verify === "biz" ? "on" : ""} onClick={() => setVerify("biz")}>사업자등록번호</button><button className={verify === "ltc" ? "on" : ""} onClick={() => setVerify("ltc")}>장기요양기관 코드</button></div>
-      {verify === "biz" ? <div className="field big" style={{ marginTop: 14 }}><label>사업자등록번호</label><input inputMode="numeric" placeholder="000-00-00000" value={bizno} onChange={e => setBizno(e.target.value)} autoFocus /><span className="help">운영팀이 국세청 사업자 상태와 상호를 확인합니다</span></div>
-        : <div className="field big" style={{ marginTop: 14 }}><label>장기요양기관 코드 (기호)</label><input inputMode="numeric" placeholder="1-2345678900" value={ltc} onChange={e => setLtc(e.target.value)} autoFocus /><span className="help">건강보험공단 기관 정보와 평가등급을 확인해 공고에 표시합니다</span></div>}
+      {verify === "biz" ? <div className="field big" style={{ marginTop: 14 }}><label htmlFor="bj-bizno">사업자등록번호</label><input id="bj-bizno" inputMode="numeric" placeholder="000-00-00000" value={bizno} onChange={e => setBizno(e.target.value)} autoFocus /><span className="help">운영팀이 국세청 사업자 상태와 상호를 확인합니다</span></div>
+        : <div className="field big" style={{ marginTop: 14 }}><label htmlFor="bj-ltc">장기요양기관 코드 (기호)</label><input id="bj-ltc" inputMode="numeric" placeholder="1-2345678900" value={ltc} onChange={e => setLtc(e.target.value)} autoFocus /><span className="help">건강보험공단 기관 정보와 평가등급을 확인해 공고에 표시합니다</span></div>}
       <div className="two" style={{ marginTop: 20 }}><button className="btn out" disabled={busy} onClick={() => finish("none")}>나중에 할게요</button><button className="btn sec pill" disabled={busy} onClick={() => { const v = verify === "biz" ? bizno.replace(/\D/g, "") : ltc.replace(/\D/g, ""); if (verify === "biz" ? v.length !== 10 : v.length < 8) { toast(verify === "biz" ? "사업자등록번호 10자리를 확인해 주세요" : "기관 코드를 확인해 주세요"); return; } finish("pending"); }}>인증 요청</button></div>
     </> : <>
       <span className="tag sec">이메일 확인</span><h2 style={{ marginTop: 8 }}>메일함을 확인해 주세요</h2>

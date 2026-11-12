@@ -1,6 +1,6 @@
 import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
-import { db, userFromRequest, rateLimit, isDemo } from "@/lib/db/server";
+import { db, userFromRequest, rateLimit, isDemo, cleanLine } from "@/lib/db/server";
 import { getJobs, parseAddr } from "@/lib/repo";
 import { bizOf } from "@/lib/db/mappers";
 import { FACS, JOB_TYPES, SCHEDS } from "@/lib/constants";
@@ -11,7 +11,8 @@ export async function GET(req: Request) {
   return NextResponse.json({ count: list.length, jobs: list });
 }
 
-const s = (v: unknown, n: number) => String(v ?? "").trim().slice(0, n);
+const s = (v: unknown, n: number) => cleanLine(v, n);
+const multi = (v: unknown, n: number) => String(v ?? "").replace(/[\u0000-\u0008\u000b-\u001f\u007f<>]/g, " ").trim().slice(0, n);
 
 /** 기업 공고 등록. 시설 인증 전이면 published=false 로 저장 → 운영자 검수 완료 시 일괄 노출 */
 export async function POST(req: Request) {
@@ -26,8 +27,8 @@ export async function POST(req: Request) {
   const addr = s(b.addr, 80); const { gu, dong } = parseAddr(addr);
   const published = biz.status === "verified";
   const { data, error } = await db()!.from("jobs").insert({
-    business_id: biz.id, org: s(b.org, 60), fac: b.fac, job: b.job, sched: b.sched, title: s(b.title, 80) || null, hours: s(b.hours, 60), addr, gu, dong, pay: s(b.pay, 40), contact: s(b.contact, 20),
-    ins: !!b.ins, pay_open: !!b.payOpen, no_lic: !!b.noLic, urgent: false, description: s(b.desc, 3000), head: Math.min(99, Math.max(1, Number(b.head) || 1)), published, source: "web",
+    business_id: biz.id, org: s(b.org, 60), fac: b.fac, job: b.job, sched: b.sched, title: s(b.title, 80) || null, hours: s(b.hours, 60), addr, gu, dong, pay: s(b.pay, 40), contact: String(b.contact ?? "").replace(/[^\d-]/g, "").slice(0, 14),
+    ins: !!b.ins, pay_open: !!b.payOpen, no_lic: !!b.noLic, urgent: false, description: multi(b.desc, 3000), head: Math.min(99, Math.max(1, Number(b.head) || 1)), published, source: "web",
   }).select("id").single();
   if (error) return NextResponse.json({ ok: false, msg: "저장하지 못했습니다" }, { status: 500 });
   if (b.urgent) await db()!.from("orders").insert({ business_id: biz.id, product: "urgent", count: 1, amount: 7000, job_id: data.id, status: "pending" });

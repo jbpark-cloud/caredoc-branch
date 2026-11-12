@@ -8,7 +8,7 @@ export default function ConsultButton() {
   return <form className="stack" style={{ minWidth: 260 }} onSubmit={async e => {
     e.preventDefault(); if (!agree) { toast("연락 목적의 번호 수집에 동의해 주세요"); return; }
     setBusy(true); let j: { ok?: boolean; msg?: string } = {};
-    try { const r = await fetch("/api/consult", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone }) }); j = await r.json(); } catch {}
+    try { const r = await fetch("/api/consult", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone, consent: agree }) }); j = await r.json(); } catch {}
     setBusy(false); if (j.ok) { toast("상담 신청이 접수되었습니다. 평일 중 전화드립니다"); setOpen(false); setPhone(""); } else toast(j.msg || "접수하지 못했습니다");
   }}>
     <div className="field"><label htmlFor="c-phone">연락받을 휴대전화</label><input id="c-phone" inputMode="numeric" autoComplete="tel" placeholder="010-0000-0000" value={phone} onChange={e => setPhone(e.target.value)} autoFocus /></div>

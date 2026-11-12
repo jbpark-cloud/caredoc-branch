@@ -6,7 +6,7 @@ import Footer, { TabBar } from "@/components/Footer";
 import ModalHost from "@/components/ModalHost";
 import { SITE_URL, SITE_NAME } from "@/lib/constants";
 import { isDemo } from "@/lib/db/server";
-import { Analytics } from "@vercel/analytics/react";
+import SiteAnalytics from "@/components/SiteAnalytics";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -29,7 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <TabBar />
           <ModalHost />
         </Providers>
-        <Analytics />
+        <SiteAnalytics />
       </body>
     </html>
   );

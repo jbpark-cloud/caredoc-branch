@@ -21,19 +21,19 @@ export function meta(title: string, description: string, path: string, extra: Pa
 
 export function jobLD(j: Job) {
   const [gu, dong] = j.area.split(" ");
-  const num = parseInt(j.pay.replace(/[^\d]/g, ""), 10) * (j.pay.includes("만원") ? 10000 : 1);
+  const raw = parseInt(j.pay.replace(/[^\d]/g, ""), 10);
+  const num = Number.isFinite(raw) && raw > 0 ? raw * (j.pay.includes("만원") ? 10000 : 1) : null;
+  const unit = /시급/.test(j.pay) ? "HOUR" : /일급|일당|^일 /.test(j.pay) ? "DAY" : /연봉/.test(j.pay) ? "YEAR" : /월/.test(j.pay) ? "MONTH" : null; // '건당' 등은 단위가 없어 생략
   const posted = new Date(Date.now() - j.days * 864e5);
-  const validThrough = new Date(posted.getTime() + 30 * 864e5);
   return {
     "@context": "https://schema.org/", "@type": "JobPosting",
     title: j.title,
-    description: `${j.duty.join(". ")}. 자격: ${j.req}. 근무시간: ${j.hours.join(" ")}. 복리후생: ${j.benef.join(", ")}`,
+    description: [j.duty.join(". "), j.req && `자격: ${j.req}`, `근무시간: ${j.hours.filter(Boolean).join(" ")}`, j.benef.length ? `복리후생: ${j.benef.join(", ")}` : ""].filter(Boolean).join(". "),
     datePosted: posted.toISOString().slice(0, 10),
-    validThrough: validThrough.toISOString().slice(0, 10),
     employmentType: j.sched === "단기" ? "TEMPORARY" : j.sched === "주3일" || j.sched === "오전만" ? "PART_TIME" : "FULL_TIME",
     hiringOrganization: { "@type": "Organization", name: j.org, sameAs: SITE_URL + encodeURI(facilityPath(j)) },
     jobLocation: { "@type": "Place", address: { "@type": "PostalAddress", addressRegion: "서울특별시", addressLocality: gu, streetAddress: dong, addressCountry: "KR" } },
-    baseSalary: { "@type": "MonetaryAmount", currency: "KRW", value: { "@type": "QuantitativeValue", value: num, unitText: j.pay.startsWith("시급") ? "HOUR" : j.pay.startsWith("일급") ? "DAY" : j.pay.startsWith("연봉") ? "YEAR" : "MONTH" } },
+    ...(num && unit ? { baseSalary: { "@type": "MonetaryAmount", currency: "KRW", value: { "@type": "QuantitativeValue", value: num, unitText: unit } } } : {}),
     identifier: { "@type": "PropertyValue", name: "carejobmoa", value: String(j.id) },
     industry: "노인복지·요양", directApply: true, url: SITE_URL + encodeURI(jobPath(j)),
   };
